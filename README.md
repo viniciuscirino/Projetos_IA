@@ -6,7 +6,7 @@
 
 ## 📄 Descrição
 
-O **Sistema de Gestão para o Sindicato Rural de Indiaroba** é uma aplicação web completa, projetada para funcionar de forma **100% offline**. Seu objetivo é modernizar e simplificar a administração das operações diárias do sindicato, oferecendo uma ferramenta robusta e segura que armazena todos os dados diretamente no navegador do usuário, garantindo privacidade e acesso contínuo mesmo sem internet.
+O **Sistema de Gestão para o Sindicato Rural de Indiaroba** é uma aplicação web completa com uma arquitetura **offline-first**. Seu objetivo é modernizar e simplificar a administração das operações diárias do sindicato. A ferramenta armazena todos os dados diretamente no navegador do usuário, garantindo privacidade e acesso contínuo às funcionalidades mesmo sem conexão à internet após o primeiro carregamento.
 
 A aplicação foi construída com foco em usabilidade, permitindo o gerenciamento de associados, controle de pagamentos, geração de documentos oficiais e relatórios financeiros detalhados.
 
@@ -75,26 +75,41 @@ Este projeto foi construído com tecnologias modernas, focando em uma arquitetur
 
 ## 🚀 Como Executar o Projeto
 
-A beleza deste projeto está em sua simplicidade. Não há necessidade de instalar dependências com `npm` ou `yarn`, nem de um processo de `build`.
+Este projeto foi desenvolvido para ser executado diretamente no navegador, sem a necessidade de um processo de build complexo ou instalação de dependências via `npm`.
+
+### Execução Padrão (com acesso à internet)
 
 1.  **Clone o repositório:**
     ```bash
     git clone https://github.com/seu-usuario/sindicato-gestao.git
     ```
 
-2.  **Abra o arquivo `index.html`:**
-    -   Navegue até a pasta do projeto e abra o arquivo `index.html` diretamente no seu navegador de preferência (Google Chrome, Firefox, etc.).
-    -   Para uma melhor experiência, especialmente para evitar problemas com políticas de segurança do navegador, você pode usar um servidor local simples:
+2.  **Execute um servidor local:**
+    -   Para garantir o funcionamento correto e evitar problemas de segurança (CORS), é recomendado usar um servidor web local. Se você tem o Node.js instalado, o método mais simples é usar o pacote `serve`:
         ```bash
-        # Se você tiver o Node.js instalado, pode usar o 'serve'
+        # Navegue até a pasta do projeto
+        cd sindicato-gestao
+
+        # Instale e execute o servidor
         npx serve .
         ```
-        E então acesse o endereço fornecido (geralmente `http://localhost:3000`).
+    -   Após executar o comando, acesse o endereço fornecido no terminal (geralmente `http://localhost:3000`).
+
+3.  **Alternativa (abrir arquivo diretamente):**
+    -   Você também pode abrir o arquivo `index.html` diretamente no seu navegador. No entanto, alguns navegadores podem restringir funcionalidades quando arquivos são abertos localmente (protocolo `file:///`).
+
+### Uso Offline
+
+A aplicação foi projetada com uma abordagem **offline-first**:
+
+-   **Primeiro Acesso:** É necessário ter uma conexão com a internet no primeiro acesso para que o navegador possa baixar as dependências externas (React, Tailwind CSS, etc.) dos CDNs.
+-   **Uso Subsequente:** Após o primeiro carregamento, o navegador armazena esses arquivos em cache. **Enquanto o cache do navegador não for limpo**, a aplicação poderá ser iniciada e utilizada completamente offline. Todos os dados de associados, pagamentos, etc., são sempre salvos localmente no seu navegador e não dependem de internet.
 
 ### Login Padrão
 
-Para acessar o sistema pela primeira vez, utilize as credenciais padrão:
+Para acessar o sistema pela primeira vez, utilize uma das credenciais padrão:
 -   **Administrador:** `username: admin` | `password: admin`
+-   **Usuário:** `username: vinicius` | `password: user`
 
 ---
 
