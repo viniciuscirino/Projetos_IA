@@ -160,7 +160,77 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
     );
 };
 
-const DocumentModal: React.FC<{ client: Client; onClose: () => void }> = ({ client, onClose }) => {
+const DocumentPreviewModal: React.FC<{ doc: Document; onClose: () => void }> = ({ doc, onClose }) => {
+    const [content, setContent] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const modalRoot = document.getElementById('modal-root');
+
+    useEffect(() => {
+        setIsLoading(true);
+        if (doc.type.startsWith('image/') || doc.type === 'application/pdf') {
+            const url = URL.createObjectURL(doc.content);
+            setContent(url);
+            setIsLoading(false);
+            return () => URL.revokeObjectURL(url);
+        } else if (doc.type.startsWith('text/')) {
+            doc.content.text().then(text => {
+                setContent(text);
+                setIsLoading(false);
+            }).catch(() => setIsLoading(false));
+        } else {
+             setIsLoading(false);
+        }
+    }, [doc]);
+    
+    useEffect(() => {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }, []);
+
+    const renderContent = () => {
+        if (isLoading) {
+            return <div className="flex justify-center items-center h-full"><p>Carregando visualização...</p></div>;
+        }
+
+        if (doc.type.startsWith('image/') && content) {
+            return <img src={content} alt={doc.name} className="max-w-full max-h-[calc(100vh-12rem)] object-contain mx-auto" />;
+        }
+        if (doc.type === 'application/pdf' && content) {
+            return <iframe src={content} className="w-full h-[calc(100vh-10rem)] border-0" title={doc.name}></iframe>;
+        }
+        if (doc.type.startsWith('text/') && content) {
+            return <pre className="w-full h-full p-4 bg-gray-100 rounded overflow-auto whitespace-pre-wrap text-sm">{content}</pre>;
+        }
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <i data-lucide="file-warning" className="w-16 h-16 text-yellow-500 mb-4"></i>
+                <h3 className="text-lg font-semibold">Visualização não disponível</h3>
+                <p className="text-gray-600">O tipo de arquivo '{doc.type}' não é suportado para visualização direta.</p>
+                <p className="text-sm text-gray-500 mt-1">Por favor, baixe o arquivo para abri-lo.</p>
+            </div>
+        );
+    };
+
+    if (!modalRoot) return null;
+
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] fade-in-backdrop" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col scale-in" onClick={(e) => e.stopPropagation()}>
+                <header className="flex items-center justify-between p-4 border-b">
+                    <h2 className="text-lg font-semibold text-gray-800 truncate" title={doc.name}>{doc.name}</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800 transition"><i data-lucide="x" className="w-6 h-6"></i></button>
+                </header>
+                <div className="p-4 flex-1 overflow-auto">
+                    {renderContent()}
+                </div>
+            </div>
+        </div>,
+        modalRoot
+    );
+};
+
+const DocumentModal: React.FC<{ client: Client; onClose: () => void; onPreview: (doc: Document) => void; }> = ({ client, onClose, onPreview }) => {
     const documents = useLiveQuery(() => db.documents.where({ clientId: client.id! }).toArray(), [client.id]);
     const modalRoot = document.getElementById('modal-root');
 
@@ -219,8 +289,9 @@ const DocumentModal: React.FC<{ client: Client; onClose: () => void }> = ({ clie
                     <ul className="space-y-2">
                         {documents?.map(doc => (
                             <li key={doc.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50 transition-colors">
-                                <span className="truncate">{doc.name}</span>
-                                <div>
+                                <span className="truncate flex-1 mr-2" title={doc.name}>{doc.name}</span>
+                                <div className="flex-shrink-0 flex items-center space-x-1">
+                                    <button onClick={() => onPreview(doc)} className="text-gray-500 p-1 transition-transform transform hover:scale-110" title="Visualizar"><i data-lucide="eye" className="w-4 h-4 pointer-events-none"></i></button>
                                     <button onClick={() => handleDownload(doc)} className="text-blue-500 p-1 transition-transform transform hover:scale-110" title="Baixar"><i data-lucide="download" className="w-4 h-4 pointer-events-none"></i></button>
                                     <button onClick={() => handleDelete(doc.id!)} className="text-red-500 p-1 transition-transform transform hover:scale-110" title="Excluir"><i data-lucide="trash-2" className="w-4 h-4 pointer-events-none"></i></button>
                                 </div>
@@ -253,6 +324,7 @@ const Clients: React.FC = () => {
     const [editingClient, setEditingClient] = useState<Client | undefined>(undefined);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDocModal, setShowDocModal] = useState<Client | null>(null);
+    const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
     const modalRoot = document.getElementById('modal-root');
     
     const allClients = useLiveQuery(() => db.clients.toArray(), []);
@@ -271,7 +343,7 @@ const Clients: React.FC = () => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, [filteredClients, showModal, showDocModal]);
+    }, [filteredClients, showModal, showDocModal, previewingDoc]);
 
     const handleAdd = () => {
         setEditingClient(undefined);
@@ -382,7 +454,8 @@ const Clients: React.FC = () => {
                 </div>,
                 modalRoot
             )}
-            {showDocModal && <DocumentModal client={showDocModal} onClose={() => setShowDocModal(null)} />}
+            {showDocModal && <DocumentModal client={showDocModal} onClose={() => setShowDocModal(null)} onPreview={setPreviewingDoc} />}
+            {previewingDoc && <DocumentPreviewModal doc={previewingDoc} onClose={() => setPreviewingDoc(null)} />}
         </div>
     );
 };

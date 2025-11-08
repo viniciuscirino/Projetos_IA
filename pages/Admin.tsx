@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// FIX: Import Dexie for type casting to resolve inherited method/property errors.
-import Dexie from 'dexie';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../services/db';
 import type { Setting, User } from '../types';
+import Dexie from 'dexie';
 
 const Admin: React.FC = () => {
     const [settings, setSettings] = useState<{ [key: string]: any }>({});
@@ -69,66 +68,6 @@ const Admin: React.FC = () => {
         }
     };
 
-    const handleExport = async () => {
-        try {
-            const allData: { [key: string]: any[] } = {};
-            // FIX: Cast `db` to `Dexie` to access the `tables` property.
-            for (const table of (db as Dexie).tables) {
-                allData[table.name] = await table.toArray();
-            }
-            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const timestamp = new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-');
-            a.download = `sindicato_backup_${timestamp}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Export failed:", error);
-            alert("Erro ao exportar dados.");
-        }
-    };
-
-    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        if (!window.confirm("Atenção! Importar um backup substituirá TODOS os dados atuais. Esta ação não pode ser desfeita. Deseja continuar?")) {
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const data = JSON.parse(e.target?.result as string);
-                // FIX: Cast `db` to `Dexie` to access the `transaction` and `tables` properties.
-                await (db as Dexie).transaction('rw', (db as Dexie).tables, async () => {
-                    // FIX: Cast `db` to `Dexie` to access the `tables` property.
-                    for (const table of (db as Dexie).tables) {
-                        await table.clear();
-                        if (data[table.name]) {
-                            // For documents, we need to recreate Blobs
-                            if (table.name === 'documents') {
-                                console.warn("A importação de documentos não é suportada nesta versão.");
-                            } else {
-                                await table.bulkAdd(data[table.name]);
-                            }
-                        }
-                    }
-                });
-                alert("Dados importados com sucesso! A página será recarregada.");
-                window.location.reload();
-            } catch (error) {
-                console.error("Import failed:", error);
-                alert("Erro ao importar dados. Verifique o arquivo de backup.");
-            }
-        };
-        reader.readAsText(file);
-    };
-
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newUsername.trim() || !newPassword.trim()) {
@@ -167,29 +106,74 @@ const Admin: React.FC = () => {
             }
         }
     };
+    
+    const handleExportData = async () => {
+        try {
+            const data: { [key: string]: any[] } = {};
+            // FIX: Cast `db` to `Dexie` to access the `tables` property.
+            for (const table of (db as Dexie).tables) {
+                const tableData = await table.toArray();
+                data[table.name] = tableData;
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup-sindicato-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Failed to export data:", error);
+            alert("Erro ao exportar dados.");
+        }
+    };
+
+    const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!window.confirm("Atenção: A importação de dados substituirá TODOS os dados existentes no sistema. Deseja continuar?")) {
+            event.target.value = ''; // Reset file input
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target?.result as string);
+                // FIX: Cast `db` to `Dexie` to access the `transaction` method and `tables` property.
+                await (db as Dexie).transaction('rw', (db as Dexie).tables, async () => {
+                    for (const table of (db as Dexie).tables) {
+                        if (data[table.name]) {
+                            // Convert date strings back to Date objects
+                            const itemsToImport = data[table.name].map((item: any) => {
+                                const newItem = { ...item };
+                                if (item.createdAt) newItem.createdAt = new Date(item.createdAt);
+                                if (item.updatedAt) newItem.updatedAt = new Date(item.updatedAt);
+                                return newItem;
+                            });
+                            await table.clear();
+                            await table.bulkAdd(itemsToImport);
+                        }
+                    }
+                });
+                alert("Dados importados com sucesso! A página será recarregada.");
+                window.location.reload();
+            } catch (error) {
+                console.error("Failed to import data:", error);
+                alert("Erro ao importar dados. O arquivo pode estar corrompido ou em formato inválido.");
+            }
+        };
+        reader.readAsText(file);
+    };
 
     return (
         <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Administração</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Backup & Restore Card */}
-                <div className="bg-white p-6 rounded-lg shadow-xl transition-shadow duration-300 hover:shadow-2xl">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Backup e Restauração</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <p className="text-sm text-gray-600 mb-2">Exporte todos os dados do sistema para um arquivo seguro. Guarde-o em um local seguro.</p>
-                            <button onClick={handleExport} className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                                <i data-lucide="download" className="w-4 h-4 mr-2 pointer-events-none"></i> Exportar Dados
-                            </button>
-                        </div>
-                        <div className="border-t pt-4">
-                            <p className="text-sm text-gray-600 mb-2">Importe dados de um arquivo de backup. <strong className="text-red-600">Atenção: Isso substituirá todos os dados atuais.</strong></p>
-                            <input type="file" accept=".json" onChange={handleImport} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"/>
-                        </div>
-                    </div>
-                </div>
-
                 {/* User Management Card */}
                 <div className="bg-white p-6 rounded-lg shadow-xl transition-shadow duration-300 hover:shadow-2xl">
                     <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Gerenciamento de Usuários</h2>
@@ -238,6 +222,24 @@ const Admin: React.FC = () => {
                                 ))}
                             </ul>
                         </div>
+                    </div>
+                </div>
+
+                {/* Data Management Card */}
+                <div className="bg-white p-6 rounded-lg shadow-xl transition-shadow duration-300 hover:shadow-2xl">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Gerenciamento de Dados</h2>
+                    <p className="text-sm text-gray-600 mb-4">
+                        É altamente recomendável fazer backups regulares para evitar perdas de dados.
+                        O backup exporta tudo para um arquivo que pode ser restaurado futuramente.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <button onClick={handleExportData} className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                            <i data-lucide="download" className="w-4 h-4 mr-2 pointer-events-none"></i> Exportar (Backup)
+                        </button>
+                        <label className="w-full flex items-center justify-center px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer">
+                            <i data-lucide="upload" className="w-4 h-4 mr-2 pointer-events-none"></i> Importar (Restaurar)
+                            <input type="file" accept=".json" className="hidden" onChange={handleImportData} />
+                        </label>
                     </div>
                 </div>
 

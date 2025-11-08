@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
           )}
         </ul>
       </nav>
-      <div>
+      <div className="space-y-2">
         <button
           onClick={onLogout}
           className="flex items-center w-full p-3 my-1 rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:translate-x-1 text-gray-600 hover:bg-red-100 hover:text-red-800"

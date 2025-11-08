@@ -1,14 +1,14 @@
 # Sistema de Gestão - Sindicato Rural de Indiaroba
 
-![Versão](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Versão](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-ativo-success.svg)
 ![Licença](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## 📄 Descrição
 
-O **Sistema de Gestão para o Sindicato Rural de Indiaroba** é uma aplicação web completa com uma arquitetura **offline-first**. Seu objetivo é modernizar e simplificar a administração das operações diárias do sindicato. A ferramenta armazena todos os dados diretamente no navegador do usuário, garantindo privacidade e acesso contínuo às funcionalidades mesmo sem conexão à internet após o primeiro carregamento.
+O **Sistema de Gestão para o Sindicato Rural de Indiaroba** é uma aplicação web completa com uma arquitetura **100% offline-first**. Seu objetivo é modernizar e simplificar a administração das operações diárias do sindicato. A ferramenta armazena todos os dados diretamente no **banco de dados do navegador (IndexedDB)**, garantindo total privacidade e acesso contínuo às funcionalidades mesmo sem conexão à internet após o primeiro carregamento.
 
-A aplicação foi construída com foco em usabilidade, permitindo o gerenciamento de associados, controle de pagamentos, geração de documentos oficiais e relatórios financeiros detalhados.
+A aplicação foi construída com foco em usabilidade, permitindo o gerenciamento de associados, controle de pagamentos, geração de documentos oficiais e relatórios financeiros detalhados, sem a necessidade de gerenciar arquivos externos.
 
 ---
 
@@ -46,7 +46,7 @@ O sistema é dividido em módulos intuitivos para cobrir todas as necessidades d
 
 -   **🔐 Administração e Segurança:**
     -   Sistema de autenticação com dois níveis de acesso: **Administrador** e **Usuário**.
-    -   **Backup e Restauração:** Ferramenta crucial para exportar todos os dados do sistema para um arquivo JSON e importá-los quando necessário, garantindo a segurança dos dados.
+    -   **Backup e Restauração (via JSON):** Ferramenta crucial para exportar todos os dados do sistema para um único arquivo JSON e importá-los quando necessário. **Este é o único método para garantir a segurança e a portabilidade dos dados.**
     -   Painel de configurações para personalizar informações do sindicato (nome, CNPJ, endereço) e o modelo da declaração.
     -   Gerenciamento de usuários (apenas para administradores).
 
@@ -57,7 +57,7 @@ O sistema é dividido em módulos intuitivos para cobrir todas as necessidades d
 Este projeto foi construído com tecnologias modernas, focando em uma arquitetura que não exige um servidor de back-end nem um processo de build complexo.
 
 -   **Frontend:**
-    -   [**React**](https://reactjs.org/) (v19) - Biblioteca para construção da interface de usuário.
+    -   [**React**](https://reactjs.org/) - Biblioteca para construção da interface de usuário.
     -   [**TypeScript**](https://www.typescriptlang.org/) - Superset do JavaScript que adiciona tipagem estática.
     -   [**Tailwind CSS**](https://tailwindcss.com/) - Framework CSS para estilização rápida e responsiva.
 
@@ -77,8 +77,6 @@ Este projeto foi construído com tecnologias modernas, focando em uma arquitetur
 
 Este projeto foi desenvolvido para ser executado diretamente no navegador, sem a necessidade de um processo de build complexo ou instalação de dependências via `npm`.
 
-### Execução Padrão (com acesso à internet)
-
 1.  **Clone o repositório:**
     ```bash
     git clone https://github.com/seu-usuario/sindicato-gestao.git
@@ -93,10 +91,10 @@ Este projeto foi desenvolvido para ser executado diretamente no navegador, sem a
         # Instale e execute o servidor
         npx serve .
         ```
-    -   Após executar o comando, acesse o endereço fornecido no terminal (geralmente `http://localhost:3000`).
+    -   Após executar o comando, acesse o endereço fornecido no terminal (geralmente `http://localhost:3000`). O sistema irá diretamente para a tela de login. O banco de dados será criado e populado automaticamente no primeiro acesso.
 
 3.  **Alternativa (abrir arquivo diretamente):**
-    -   Você também pode abrir o arquivo `index.html` diretamente no seu navegador. No entanto, alguns navegadores podem restringir funcionalidades quando arquivos são abertos localmente (protocolo `file:///`).
+    -   Você também pode abrir o arquivo `index.html` diretamente no seu navegador. No entanto, alguns navegadores podem restringir funcionalidades quando arquivos são abertos localmente (protocolo `file:///`). O uso de um servidor local é sempre recomendado.
 
 ### Uso Offline
 
@@ -115,9 +113,9 @@ Para acessar o sistema pela primeira vez, utilize uma das credenciais padrão:
 
 ## ⚠️ Importante: Backup dos Dados
 
-Como todos os dados são armazenados no **IndexedDB** do navegador, eles estão sujeitos a serem apagados caso o usuário limpe o cache do site ou os dados de navegação.
+Como todos os dados são armazenados no **IndexedDB** do navegador, eles estão **vinculados ao navegador e ao perfil de usuário específico** onde a aplicação é acessada. Os dados podem ser perdidos permanentemente caso o usuário limpe o cache do site, os dados de navegação ou formate o computador.
 
-É **extremamente recomendado** que o usuário realize backups periódicos utilizando a funcionalidade de **Exportar Dados** no painel de **Administração**. O arquivo JSON gerado é a única garantia de recuperação dos dados em caso de perda.
+É **extremamente recomendado** que o administrador realize **backups regulares** utilizando a funcionalidade de **Exportar Dados** no painel de **Administração**. O arquivo `.json` gerado é a única garantia de recuperação dos dados em caso de perda e o único meio de transferir os dados para outro computador.
 
 ---
 
@@ -129,7 +127,7 @@ Como todos os dados são armazenados no **IndexedDB** do navegador, eles estão 
 ├── pages/              # Componentes de página (ex: Dashboard, Clients, Admin)
 ├── services/           # Módulos de serviço (db.ts, pdfService.ts, reportService.ts)
 ├── types.ts            # Definições de tipos TypeScript
-├── App.tsx             # Componente principal que gerencia rotas e estado da aplicação
+├── App.tsx             # Componente principal que gerencia o estado da aplicação
 ├── index.html          # Ponto de entrada da aplicação
 ├── index.tsx           # Ponto de montagem do React
 └── README.md           # Este arquivo
@@ -151,4 +149,4 @@ Contribuições são bem-vindas! Se você deseja melhorar o sistema, siga os pas
 
 ## 📜 Licença
 
-Este projeto está licenciado sob a **Licença MIT**. Veja o arquivo `LICENSE` para mais detalhes.
+Este projeto está licenciado sob a **Licença MIT**.

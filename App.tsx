@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { Page } from './types';
 import Login from './pages/Login';
 import Sidebar from './components/Sidebar';
@@ -18,26 +18,15 @@ declare global {
 }
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => sessionStorage.getItem('isAuthenticated') === 'true');
+  const [userRole, setUserRole] = useState<string | null>(() => sessionStorage.getItem('userRole'));
+  const [username, setUsername] = useState<string | null>(() => sessionStorage.getItem('username'));
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-
-  useEffect(() => {
-    const loggedIn = sessionStorage.getItem('isAuthenticated');
-    const role = sessionStorage.getItem('userRole');
-    const user = sessionStorage.getItem('username');
-    if (loggedIn === 'true' && role && user) {
-      setIsAuthenticated(true);
-      setUserRole(role);
-      setUsername(user);
-    }
-  }, []);
-
+  
   const handleLogin = useCallback((username: string, role: string) => {
     sessionStorage.setItem('isAuthenticated', 'true');
-    sessionStorage.setItem('userRole', role);
     sessionStorage.setItem('username', username);
+    sessionStorage.setItem('userRole', role);
     setIsAuthenticated(true);
     setUserRole(role);
     setUsername(username);
@@ -45,9 +34,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = useCallback(() => {
-    sessionStorage.removeItem('isAuthenticated');
-    sessionStorage.removeItem('userRole');
-    sessionStorage.removeItem('username');
+    sessionStorage.clear();
     setIsAuthenticated(false);
     setUserRole(null);
     setUsername(null);
