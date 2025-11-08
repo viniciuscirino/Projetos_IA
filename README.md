@@ -95,7 +95,6 @@ A beleza deste projeto está em sua simplicidade. Não há necessidade de instal
 
 Para acessar o sistema pela primeira vez, utilize as credenciais padrão:
 -   **Administrador:** `username: admin` | `password: admin`
--   **Usuário:** `username: vinicius` | `password: user`
 
 ---
 
