@@ -1,0 +1,5 @@
+{
+  "name": "Sindicato Rural de Indiaroba - Sistema de Gestão",
+  "description": "Um sistema de gerenciamento para o Sindicato Rural de Indiaroba para cadastrar associados, registrar pagamentos, gerar declarações e emitir relatórios. O sistema é projetado para funcionar completamente offline, armazenando todos os dados de forma segura no navegador do usuário.",
+  "requestFramePermissions": []
+}
