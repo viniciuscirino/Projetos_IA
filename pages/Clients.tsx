@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 // FIX: Import Dexie for type casting to resolve inherited method errors.
 import Dexie from 'dexie';
@@ -161,6 +162,7 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
 
 const DocumentModal: React.FC<{ client: Client; onClose: () => void }> = ({ client, onClose }) => {
     const documents = useLiveQuery(() => db.documents.where({ clientId: client.id! }).toArray(), [client.id]);
+    const modalRoot = document.getElementById('modal-root');
 
     useEffect(() => {
         if (window.lucide) {
@@ -203,7 +205,9 @@ const DocumentModal: React.FC<{ client: Client; onClose: () => void }> = ({ clie
         URL.revokeObjectURL(url);
     };
 
-    return (
+    if (!modalRoot) return null;
+
+    return ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 fade-in-backdrop">
             <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl scale-in">
                 <h2 className="text-xl font-bold mb-4">Documentos de {client.nomeCompleto}</h2>
@@ -229,7 +233,8 @@ const DocumentModal: React.FC<{ client: Client; onClose: () => void }> = ({ clie
                     <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-all duration-200 transform hover:scale-105">Fechar</button>
                 </div>
             </div>
-        </div>
+        </div>,
+        modalRoot
     );
 };
 
@@ -248,6 +253,7 @@ const Clients: React.FC = () => {
     const [editingClient, setEditingClient] = useState<Client | undefined>(undefined);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDocModal, setShowDocModal] = useState<Client | null>(null);
+    const modalRoot = document.getElementById('modal-root');
     
     const allClients = useLiveQuery(() => db.clients.toArray(), []);
 
@@ -353,7 +359,7 @@ const Clients: React.FC = () => {
                 </div>
             </div>
 
-            {showModal && (
+            {showModal && modalRoot && ReactDOM.createPortal(
                 <div 
                     className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 fade-in-backdrop px-4 py-12 overflow-y-auto" 
                     onClick={() => setShowModal(false)}
@@ -373,7 +379,8 @@ const Clients: React.FC = () => {
                         <h2 className="text-2xl font-bold mb-6 text-gray-800">{editingClient ? 'Editar' : 'Novo'} Associado</h2>
                         <ClientForm client={editingClient} onSave={handleSave} onCancel={() => setShowModal(false)} />
                     </div>
-                </div>
+                </div>,
+                modalRoot
             )}
             {showDocModal && <DocumentModal client={showDocModal} onClose={() => setShowDocModal(null)} />}
         </div>
