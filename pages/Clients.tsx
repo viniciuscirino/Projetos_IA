@@ -89,28 +89,71 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
     };
     
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input name="nomeCompleto" value={formData.nomeCompleto} onChange={handleChange} placeholder="Nome Completo" required className="p-2 border rounded w-full md:col-span-2 focus:ring-2 focus:ring-emerald-500 transition" />
-                <input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="CPF" required className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" maxLength={14} />
-                <input name="rg" value={formData.rg} onChange={handleChange} placeholder="RG" required className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
-                <input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="Telefone" required className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" maxLength={15} />
-                <input name="email" value={formData.email} onChange={handleChange} type="email" placeholder="E-mail" required className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
-                <input name="dataFiliacao" value={formData.dataFiliacao} onChange={handleChange} type="date" required className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" title="Data de Filiação" />
-                <select name="status" value={formData.status} onChange={handleChange} className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition">
-                    <option value="Ativo">Ativo</option>
-                    <option value="Inativo">Inativo</option>
-                    <option value="Suspenso">Suspenso</option>
-                </select>
-                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Foto</label>
-                    <input type="file" onChange={handleFileChange} accept="image/*" className="p-1 border rounded w-full text-sm" />
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                {/* Nome Completo */}
+                <div className="md:col-span-2">
+                    <label htmlFor="nomeCompleto" className="block text-sm font-medium text-gray-700">Nome Completo</label>
+                    <input id="nomeCompleto" name="nomeCompleto" value={formData.nomeCompleto} onChange={handleChange} placeholder="Nome Completo do Associado" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                </div>
+
+                {/* CPF */}
+                <div>
+                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700">CPF</label>
+                    <input id="cpf" name="cpf" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" maxLength={14} />
+                </div>
+
+                {/* RG */}
+                <div>
+                    <label htmlFor="rg" className="block text-sm font-medium text-gray-700">RG</label>
+                    <input id="rg" name="rg" value={formData.rg} onChange={handleChange} placeholder="RG" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                </div>
+
+                {/* Telefone */}
+                <div>
+                    <label htmlFor="telefone" className="block text-sm font-medium text-gray-700">Telefone</label>
+                    <input id="telefone" name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(99) 99999-9999" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" maxLength={15} />
+                </div>
+
+                {/* E-mail */}
+                <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">E-mail</label>
+                    <input id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="email@exemplo.com" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                </div>
+                
+                {/* Data de Filiação */}
+                <div>
+                    <label htmlFor="dataFiliacao" className="block text-sm font-medium text-gray-700">Data de Filiação</label>
+                    <input id="dataFiliacao" name="dataFiliacao" value={formData.dataFiliacao} onChange={handleChange} type="date" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                </div>
+                
+                {/* Status */}
+                <div>
+                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="status" name="status" value={formData.status} onChange={handleChange} className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition h-[42px]">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                        <option value="Suspenso">Suspenso</option>
+                    </select>
+                </div>
+
+                {/* Foto */}
+                <div className="md:col-span-2">
+                    <label htmlFor="foto" className="block text-sm font-medium text-gray-700">Foto</label>
+                    <input id="foto" type="file" onChange={handleFileChange} accept="image/*" className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"/>
+                </div>
+
+                {/* Endereço */}
+                <div className="md:col-span-2">
+                    <label htmlFor="endereco" className="block text-sm font-medium text-gray-700">Endereço</label>
+                    <input id="endereco" name="endereco" value={formData.endereco} onChange={handleChange} placeholder="Endereço completo do associado" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
                 </div>
             </div>
-            <input name="endereco" value={formData.endereco} onChange={handleChange} placeholder="Endereço" required className="p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
-            <div className="flex justify-end space-x-2">
-                <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-all duration-200 transform hover:scale-105">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">{client ? 'Atualizar' : 'Salvar'}</button>
+            
+            {/* Botões */}
+            <div className="flex justify-end space-x-3 pt-4">
+                <button type="button" onClick={onCancel} className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 transform hover:scale-105">Cancelar</button>
+                <button type="submit" className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">{client ? 'Atualizar Associado' : 'Salvar Associado'}</button>
             </div>
         </form>
     );
@@ -311,9 +354,23 @@ const Clients: React.FC = () => {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 fade-in-backdrop">
-                    <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-3xl scale-in">
-                        <h2 className="text-xl font-bold mb-4">{editingClient ? 'Editar' : 'Novo'} Associado</h2>
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 fade-in-backdrop px-4 py-12 overflow-y-auto" 
+                    onClick={() => setShowModal(false)}
+                >
+                    <div 
+                        className="relative bg-white p-8 rounded-lg shadow-2xl scale-in w-full max-w-4xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                         <button 
+                            onClick={() => setShowModal(false)} 
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                            aria-label="Fechar"
+                        >
+                            <i data-lucide="x" className="w-6 h-6 pointer-events-none"></i>
+                        </button>
+
+                        <h2 className="text-2xl font-bold mb-6 text-gray-800">{editingClient ? 'Editar' : 'Novo'} Associado</h2>
                         <ClientForm client={editingClient} onSave={handleSave} onCancel={() => setShowModal(false)} />
                     </div>
                 </div>
