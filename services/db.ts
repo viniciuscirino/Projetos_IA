@@ -1,3 +1,5 @@
+
+
 import Dexie, { type Table } from 'dexie';
 import type { Client, Payment, DeclarationLog, Expense, Document, Setting, User, Attendance } from '../types';
 
@@ -13,7 +15,21 @@ export class SindicatoDB extends Dexie {
 
   constructor() {
     super('sindicatoDB');
+
+    // Handle cases where another tab is blocking the database upgrade.
+    // FIX: Cast 'this' to Dexie to resolve a TypeScript error where the inherited 'on' method was not found.
+    (this as Dexie).on("blocked", () => {
+        console.warn("Database open is blocked. A newer version may be trying to open while an older version is still running in another tab.");
+        alert(
+            "O sistema precisa ser atualizado, mas outra aba está impedindo.\n\nPor favor, feche todas as abas deste site e tente novamente."
+        );
+    });
+
     // FIX: Cast 'this' to Dexie to resolve a TypeScript error where the inherited 'version' method was not found on the SindicatoDB subclass.
+    // The versioning has been corrected to be cumulative. Each version now declares the full schema
+    // up to that point, preventing tables from being accidentally dropped during an upgrade.
+
+    // Version 1: Initial schema
     (this as Dexie).version(1).stores({
       clients: '++id, nomeCompleto, cpf, rg',
       payments: '++id, clientId, mesReferencia, anoReferencia, dataPagamento, &[clientId+mesReferencia+anoReferencia]',
@@ -22,15 +38,19 @@ export class SindicatoDB extends Dexie {
 
     // Version 2: Add 'createdAt' index to declarations table for sorting.
     (this as Dexie).version(2).stores({
-        declarations: '++id, clientId, dataEmissao, createdAt',
+        clients: '++id, nomeCompleto, cpf, rg', // from v1
+        payments: '++id, clientId, mesReferencia, anoReferencia, dataPagamento, &[clientId+mesReferencia+anoReferencia]', // from v1
+        declarations: '++id, clientId, dataEmissao, createdAt', // updated
     });
 
     // Version 3: Add expenses, documents, settings tables and update clients table.
     (this as Dexie).version(3).stores({
-        clients: '++id, nomeCompleto, cpf, rg, status',
-        expenses: '++id, date, category',
-        documents: '++id, clientId, name',
-        settings: '&key', // Primary key is 'key', which must be unique
+        clients: '++id, nomeCompleto, cpf, rg, status', // updated
+        payments: '++id, clientId, mesReferencia, anoReferencia, dataPagamento, &[clientId+mesReferencia+anoReferencia]', // from v1
+        declarations: '++id, clientId, dataEmissao, createdAt', // from v2
+        expenses: '++id, date, category', // new
+        documents: '++id, clientId, name', // new
+        settings: '&key', // new
     }).upgrade(tx => {
         // This upgrade function is needed to provide a default status for existing clients.
         return tx.table('clients').toCollection().modify(client => {
@@ -42,23 +62,46 @@ export class SindicatoDB extends Dexie {
 
     // Version 4: Add 'users' table for user management.
     (this as Dexie).version(4).stores({
-        users: '++id, &username',
+        clients: '++id, nomeCompleto, cpf, rg, status', // from v3
+        payments: '++id, clientId, mesReferencia, anoReferencia, dataPagamento, &[clientId+mesReferencia+anoReferencia]', // from v3
+        declarations: '++id, clientId, dataEmissao, createdAt', // from v3
+        expenses: '++id, date, category', // from v3
+        documents: '++id, clientId, name', // from v3
+        settings: '&key', // from v3
+        users: '++id, &username', // new
     }).upgrade(async (tx) => {
-        const defaultUsers = [
-            { username: 'admin', password: 'admin', role: 'admin', createdAt: new Date() },
-            { username: 'vinicius', password: 'user', role: 'user', createdAt: new Date() },
-        ];
-        await tx.table('users').bulkAdd(defaultUsers);
+        // Only add default users if the table is empty to prevent constraint errors
+        // on fresh installs where the populate event also adds these users.
+        const userCount = await tx.table('users').count();
+        if (userCount === 0) {
+            const defaultUsers = [
+                { username: 'admin', password: 'admin', role: 'admin', createdAt: new Date() },
+                { username: 'vinicius', password: 'user', role: 'user', createdAt: new Date() },
+            ];
+            await tx.table('users').bulkAdd(defaultUsers);
+        }
     });
 
     // Version 5: Add 'registeredBy' to payments table.
     (this as Dexie).version(5).stores({
-        payments: '++id, clientId, mesReferencia, anoReferencia, dataPagamento, &[clientId+mesReferencia+anoReferencia], registeredBy',
+        clients: '++id, nomeCompleto, cpf, rg, status', // from v4
+        payments: '++id, clientId, mesReferencia, anoReferencia, dataPagamento, &[clientId+mesReferencia+anoReferencia], registeredBy', // updated
+        declarations: '++id, clientId, dataEmissao, createdAt', // from v4
+        expenses: '++id, date, category', // from v4
+        documents: '++id, clientId, name', // from v4
+        settings: '&key', // from v4
+        users: '++id, &username', // from v4
     });
 
     // Version 6: Update payments table to use 'referencia' (YYYY-MM) instead of mes/anoReferencia.
     (this as Dexie).version(6).stores({
-        payments: '++id, clientId, referencia, dataPagamento, &[clientId+referencia], registeredBy',
+        clients: '++id, nomeCompleto, cpf, rg, status', // from v5
+        payments: '++id, clientId, referencia, dataPagamento, &[clientId+referencia], registeredBy', // updated
+        declarations: '++id, clientId, dataEmissao, createdAt', // from v5
+        expenses: '++id, date, category', // from v5
+        documents: '++id, clientId, name', // from v5
+        settings: '&key', // from v5
+        users: '++id, &username', // from v5
     }).upgrade(tx => {
         return tx.table('payments').toCollection().modify((payment: any) => {
             if (payment.anoReferencia && payment.mesReferencia) {
@@ -71,12 +114,26 @@ export class SindicatoDB extends Dexie {
     
     // Version 7: Add 'attendances' table for logging client interactions.
     (this as Dexie).version(7).stores({
-        attendances: '++id, clientId, createdAt'
+        clients: '++id, nomeCompleto, cpf, rg, status', // from v6
+        payments: '++id, clientId, referencia, dataPagamento, &[clientId+referencia], registeredBy', // from v6
+        declarations: '++id, clientId, dataEmissao, createdAt', // from v6
+        expenses: '++id, date, category', // from v6
+        documents: '++id, clientId, name', // from v6
+        settings: '&key', // from v6
+        users: '++id, &username', // from v6
+        attendances: '++id, clientId, createdAt' // new
     });
 
     // Version 8: Add payment declaration template and convert existing template to HTML
     (this as Dexie).version(8).stores({
-        // No schema changes, just a data upgrade
+        clients: '++id, nomeCompleto, cpf, rg, status', // from v7
+        payments: '++id, clientId, referencia, dataPagamento, &[clientId+referencia], registeredBy', // from v7
+        declarations: '++id, clientId, dataEmissao, createdAt', // from v7
+        expenses: '++id, date, category', // from v7
+        documents: '++id, clientId, name', // from v7
+        settings: '&key', // from v7
+        users: '++id, &username', // from v7
+        attendances: '++id, clientId, createdAt', // from v7
     }).upgrade(async (tx) => {
         // Add payment declaration template if it doesn't exist
         const paymentTemplateExists = await tx.table('settings').get('paymentDeclarationTemplate');
@@ -97,15 +154,15 @@ export class SindicatoDB extends Dexie {
     });
 
     // The 'populate' event is only triggered when the database is created for the first time.
-    // FIX: Cast 'this' to Dexie to resolve a TypeScript error where the inherited 'on' method was not found on the SindicatoDB subclass.
+    // FIX: Cast 'this' to Dexie to resolve a TypeScript error where the inherited 'on' method was not found.
     (this as Dexie).on('populate', this.populateDatabase);
   }
 
-  populateDatabase = async () => {
+  populateDatabase = async (tx: Dexie.Transaction) => {
     try {
         const initialClients: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'status'>[] = [];
         
-        await this.clients.bulkAdd(initialClients.map(c => ({...c, status: 'Ativo', createdAt: new Date(), updatedAt: new Date() })));
+        await tx.table('clients').bulkAdd(initialClients.map(c => ({...c, status: 'Ativo', createdAt: new Date(), updatedAt: new Date() })));
 
         // Add default settings
         const defaultSettings: Setting[] = [
@@ -117,14 +174,17 @@ export class SindicatoDB extends Dexie {
             { key: 'paymentDeclarationTemplate', value: `<p>Declaramos, para os devidos fins, que o(a) Sr(a). {{NOME_ASSOCIADO}}, inscrito(a) no CPF sob o nº {{CPF}}, associado(a) desta entidade, encontra-se em dia com suas obrigações financeiras, tendo o último pagamento registrado referente à competência de <b>{{MES_ULTIMO_PAGAMENTO}} de {{ANO_ULTIMO_PAGAMENTO}}</b>.</p><p>Por ser expressão da verdade, firmamos a presente declaração.</p>` },
             { key: 'syndicateSignature', value: '' } // Base64 encoded signature image
         ];
-        await this.settings.bulkAdd(defaultSettings);
+        await tx.table('settings').bulkAdd(defaultSettings);
         
-        // Add default users
-        const defaultUsers: Omit<User, 'id'>[] = [
-            { username: 'admin', password: 'admin', role: 'admin', createdAt: new Date() },
-            { username: 'vinicius', password: 'user', role: 'user', createdAt: new Date() },
-        ];
-        await this.users.bulkAdd(defaultUsers);
+        // Add default users only if the table is empty to prevent race condition with v4 upgrade
+        const userCount = await tx.table('users').count();
+        if (userCount === 0) {
+            const defaultUsers: Omit<User, 'id'>[] = [
+                { username: 'admin', password: 'admin', role: 'admin', createdAt: new Date() },
+                { username: 'vinicius', password: 'user', role: 'user', createdAt: new Date() },
+            ];
+            await tx.table('users').bulkAdd(defaultUsers);
+        }
 
     } catch (error) {
         // Log any errors during population to the console for debugging.
@@ -134,10 +194,3 @@ export class SindicatoDB extends Dexie {
 }
 
 export const db = new SindicatoDB();
-
-// FIX: Catch potential errors during database initialization.
-// An unhandled rejection here would cause a generic "Uncaught [object Object]" error.
-// FIX: Cast `db` to `Dexie` to resolve a TypeScript error where the inherited `open` method was not found on the `SindicatoDB` subclass.
-(db as Dexie).open().catch((err) => {
-    console.error('Failed to open db: ', err.stack || err);
-});

@@ -3,17 +3,16 @@ import { sqliteService } from '../services/sqliteService';
 import type { Payment, Client } from '../types';
 
 const StatCard: React.FC<{ icon: string; title: string; value: string | number; color: string }> = ({ icon, title, value, color }) => (
-    <div className="bg-white p-6 rounded-lg shadow-lg flex items-center transition-all duration-300 ease-in-out transform hover:shadow-xl hover:-translate-y-1 cursor-pointer">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center transition-all duration-300 ease-in-out transform hover:shadow-xl hover:-translate-y-1 cursor-pointer">
         <div className={`p-3 rounded-full mr-4 ${color} shadow-md`}>
             <i data-lucide={icon} className="w-6 h-6 text-white"></i>
         </div>
         <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-bold text-gray-800">{value}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
         </div>
     </div>
 );
-
 
 const Dashboard: React.FC = () => {
     const [clients, setClients] = useState<Client[]>([]);
@@ -70,7 +69,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="container mx-auto">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">Dashboard</h1>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatCard icon="users" title="Total de Associados" value={stats.totalClients} color="bg-blue-500" />
@@ -79,12 +78,12 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-8">
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Pagamentos Recentes</h2>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Pagamentos Recentes</h2>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="border-b bg-gray-50">
+                                <tr className="border-b bg-gray-50 dark:bg-gray-700/50">
                                     <th className="p-3">Associado</th>
                                     <th className="p-3">Referência</th>
                                     <th className="p-3">Valor</th>
@@ -94,14 +93,14 @@ const Dashboard: React.FC = () => {
                             <tbody>
                                 {recentPayments.length > 0 ? (
                                     recentPayments.map(p => (
-                                        <tr key={p.id} className="border-b hover:bg-gray-50 transition-colors duration-200">
+                                        <tr key={p.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                                             <td className="p-3">{getClientName(p.clientId)}</td>
                                             <td className="p-3">{p.referencia ? p.referencia.split('-').reverse().join('/') : 'N/A'}</td>
                                             <td className="p-3">R$ {p.valor.toFixed(2)}</td>
                                             <td className="p-3">{new Date(p.dataPagamento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</td>
                                         </tr>
                                     ))
-                                ) : (
+                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="p-3 text-center text-gray-500">Nenhum pagamento recente.</td>
                                     </tr>

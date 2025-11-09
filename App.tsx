@@ -13,6 +13,7 @@ import CashFlow from './pages/CashFlow';
 import Mailing from './pages/Mailing';
 import { sqliteService } from './services/sqliteService';
 import { toastService, type ToastMessage } from './services/toastService';
+import { db } from './services/db';
 
 // FIX: Declare window interface to include lucide
 declare global {
@@ -124,12 +125,55 @@ const ToastContainer: React.FC = () => {
   );
 };
 
+const DBLoadingScreen: React.FC = () => (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-500"></div>
+        <p className="ml-4 text-lg font-semibold">Carregando banco de dados...</p>
+    </div>
+);
+
+const DBErrorScreen: React.FC = () => {
+    useEffect(() => {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }, []);
+
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen text-center p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+             <i data-lucide="database-zap" className="w-16 h-16 text-red-500 mb-4"></i>
+            <h1 className="text-2xl font-bold text-red-700 dark:text-red-400">Falha ao Carregar o Banco de Dados</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Não foi possível iniciar o sistema. Isso pode acontecer se o armazenamento do navegador estiver corrompido ou cheio.</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Por favor, tente recarregar a página. Se o problema persistir, entre em contato com o suporte.</p>
+             <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-md transition-all duration-300 transform hover:scale-105">
+                Recarregar Página
+             </button>
+        </div>
+    );
+};
+
 const App: React.FC = () => {
+  const [dbStatus, setDbStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => sessionStorage.getItem('isAuthenticated') === 'true');
   const [userRole, setUserRole] = useState<string | null>(() => sessionStorage.getItem('userRole'));
   const [username, setUsername] = useState<string | null>(() => sessionStorage.getItem('username'));
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  
+  useEffect(() => {
+    const openDatabase = async () => {
+        try {
+            await (db as any).open();
+            console.log("Database opened successfully.");
+            setDbStatus('ready');
+        } catch (err) {
+            console.error('Failed to open db: ', err);
+            // Don't show toast here as the container might not be rendered
+            setDbStatus('error');
+        }
+    };
+    openDatabase();
+  }, []);
   
   useEffect(() => {
     if (theme === 'dark') {
@@ -196,6 +240,14 @@ const App: React.FC = () => {
         return <Dashboard />;
     }
   };
+  
+  if (dbStatus === 'loading') {
+    return <DBLoadingScreen />;
+  }
+
+  if (dbStatus === 'error') {
+    return <DBErrorScreen />;
+  }
 
   return (
     <>
