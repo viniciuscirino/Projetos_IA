@@ -1,9 +1,9 @@
 
 {
   "name": "sindicato-gestao-desktop",
-  "productName": "Sindicato Gestão",
+  "productName": "Sindicato Gestao",
   "version": "8.0.0",
-  "description": "Sistema de Gestão Desktop para o Sindicato Rural de Indiaroba",
+  "description": "Sistema de Gestao Desktop para o Sindicato Rural de Indiaroba",
   "author": "Sindicato Rural de Indiaroba",
   "main": "main.js",
   "scripts": {
@@ -35,7 +35,7 @@
           "config": {
             "name": "SindicatoGestao",
             "authors": "Sindicato Rural de Indiaroba",
-            "description": "Sistema de Gestão Desktop para o Sindicato Rural de Indiaroba"
+            "description": "Sistema de Gestao Desktop para o Sindicato Rural de Indiaroba"
           }
         },
         {
