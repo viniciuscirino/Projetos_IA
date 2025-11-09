@@ -208,7 +208,7 @@ const Admin: React.FC = () => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, [isLoading, users, stats, userToDelete, fileToRestore]);
+    }, [isLoading, users, stats, userToDelete, fileToRestore, settings]);
 
     const handleSettingsChange = (key: string, value: string) => {
         setSettings(prev => ({ ...prev, [key]: value }));
@@ -573,52 +573,68 @@ const Admin: React.FC = () => {
                     <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4 border-b dark:border-gray-600 pb-2">Configurações Gerais</h2>
                     {isLoading ? <p>Carregando...</p> : (
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome do Sindicato</label>
-                                <input value={settings.syndicateName || ''} onChange={(e) => handleSettingsChange('syndicateName', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome do Sindicato</label>
+                                    <input value={settings.syndicateName || ''} onChange={(e) => handleSettingsChange('syndicateName', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CNPJ</label>
+                                    <input value={settings.syndicateCnpj || ''} onChange={(e) => handleSettingsChange('syndicateCnpj', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
+                                </div>
+                                 <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Endereço</label>
+                                    <input value={settings.syndicateAddress || ''} onChange={(e) => handleSettingsChange('syndicateAddress', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefone para Contato</label>
+                                    <input value={settings.syndicatePhone || ''} onChange={(e) => handleSettingsChange('syndicatePhone', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Assinatura da Diretoria (Imagem)</label>
+                                    <input type="file" accept="image/png, image/jpeg" onChange={handleSignatureUpload} className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 dark:file:bg-gray-700 file:text-emerald-700 dark:file:text-emerald-300 hover:file:bg-emerald-100 dark:hover:file:bg-gray-600 cursor-pointer"/>
+                                    {settings.syndicateSignature && (
+                                        <div className="mt-2 p-2 border dark:border-gray-600 rounded-md inline-block bg-gray-50 dark:bg-gray-700">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Assinatura Atual:</p>
+                                            <img src={settings.syndicateSignature} alt="Assinatura" className="h-16 border bg-white dark:border-gray-500"/>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CNPJ</label>
-                                <input value={settings.syndicateCnpj || ''} onChange={(e) => handleSettingsChange('syndicateCnpj', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
-                            </div>
-                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Endereço</label>
-                                <input value={settings.syndicateAddress || ''} onChange={(e) => handleSettingsChange('syndicateAddress', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
-                            </div>
-                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefone para Contato</label>
-                                <input value={settings.syndicatePhone || ''} onChange={(e) => handleSettingsChange('syndicatePhone', e.target.value)} className="p-2 border rounded w-full mt-1 focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
-                            </div>
-                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Assinatura da Diretoria (Imagem)</label>
-                                <input type="file" accept="image/png, image/jpeg" onChange={handleSignatureUpload} className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 dark:file:bg-gray-700 file:text-emerald-700 dark:file:text-emerald-300 hover:file:bg-emerald-100 dark:hover:file:bg-gray-600 cursor-pointer"/>
-                                {settings.syndicateSignature && (
-                                    <div className="mt-2 p-2 border dark:border-gray-600 rounded-md inline-block bg-gray-50 dark:bg-gray-700">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Assinatura Atual:</p>
-                                        <img src={settings.syndicateSignature} alt="Assinatura" className="h-16 border bg-white dark:border-gray-500"/>
+
+                            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Templates de Declaração</h3>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* Association Declaration Template */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <i data-lucide="file-text" className="w-4 h-4 inline-block mr-2 align-middle"></i>
+                                            Declaração de Vínculo Associativo
+                                        </label>
+                                        <RichTextEditor
+                                            value={settings.declarationTemplate || ''}
+                                            onChange={(newValue) => handleSettingsChange('declarationTemplate', newValue)}
+                                            placeholders={associationPlaceholders}
+                                        />
                                     </div>
-                                )}
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template da Declaração de Vínculo</label>
-                                    <RichTextEditor
-                                        value={settings.declarationTemplate || ''}
-                                        onChange={(newValue) => handleSettingsChange('declarationTemplate', newValue)}
-                                        placeholders={associationPlaceholders}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Template da Declaração de Pagamento</label>
-                                     <RichTextEditor
-                                        value={settings.paymentDeclarationTemplate || ''}
-                                        onChange={(newValue) => handleSettingsChange('paymentDeclarationTemplate', newValue)}
-                                        placeholders={paymentPlaceholders}
-                                    />
+
+                                    {/* Payment Status Declaration Template */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <i data-lucide="receipt" className="w-4 h-4 inline-block mr-2 align-middle"></i>
+                                            Declaração de Situação de Pagamento
+                                        </label>
+                                        <RichTextEditor
+                                            value={settings.paymentDeclarationTemplate || ''}
+                                            onChange={(newValue) => handleSettingsChange('paymentDeclarationTemplate', newValue)}
+                                            placeholders={paymentPlaceholders}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                            <button onClick={handleSaveSettings} className="w-full flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                                <i data-lucide="save" className="w-4 h-4 mr-2 pointer-events-none"></i> Salvar Configurações
+                            
+                            <button onClick={handleSaveSettings} className="w-full flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 mt-6">
+                                <i data-lucide="save" className="w-5 h-5 mr-2 pointer-events-none"></i> Salvar Todas as Configurações
                             </button>
                         </div>
                     )}
