@@ -1,123 +1,148 @@
-# Sistema de Gestão - Sindicato Rural de Indiaroba
 
-![Versão](https://img.shields.io/badge/version-6.0.0-blue.svg)
+# Sistema de Gestão Desktop - Sindicato Rural de Indiaroba
+
+![Versão](https://img.shields.io/badge/version-8.0.0--desktop-blue.svg)
+![Plataforma](https://img.shields.io/badge/platform-Electron-blueviolet.svg)
 ![Status](https://img.shields.io/badge/status-ativo-success.svg)
 ![Licença](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## 📄 Descrição
 
-Este é um sistema de gestão completo, projetado especificamente para as necessidades do Sindicato Rural de Indiaroba. A sua principal característica é a capacidade de funcionar **100% offline**, garantindo que o seu trabalho nunca seja interrompido, mesmo sem acesso à internet.
+Bem-vindo à nova era do Sistema de Gestão do Sindicato Rural de Indiaroba. Esta é uma **aplicação de desktop completa**, projetada para rodar nativamente em seu computador (Windows, macOS ou Linux), garantindo máxima performance, segurança e confiabilidade.
 
-A aplicação é moderna, segura e armazena **todos os dados de forma automática e segura diretamente no navegador do usuário**. Para garantir a segurança e a portabilidade total dos dados, o sistema conta com funcionalidades robustas de **Backup e Restauração**, que são essenciais para o seu uso a longo prazo.
+Construído com **Electron, React e TypeScript**, o sistema agora armazena todos os seus dados em um **banco de dados SQLite local**. Isso significa que suas informações ficam salvas em um arquivo seguro diretamente no seu computador, eliminando qualquer dependência da internet ou do navegador. Seus dados são 100% seus, privados e sempre acessíveis.
 
 ---
 
-## ⚠️ Atenção: Entendendo o Armazenamento Offline e a Importância do Backup
+## 🏛️ Arquitetura: Por que Mudar?
 
-Antes de começar, é fundamental entender como seus dados são salvos.
+A transição de uma aplicação web para uma de desktop foi uma decisão estratégica para garantir a longevidade e a robustez do sistema. A nova arquitetura oferece vantagens cruciais:
 
--   **Onde os Dados Ficam?** Seus dados (associados, pagamentos, etc.) são salvos em um banco de dados seguro **dentro do seu navegador** (Google Chrome, Firefox, etc.). Isso permite que o sistema seja extremamente rápido e funcione offline.
--   **Isolamento dos Dados:** Cada navegador guarda seus dados de forma isolada. Isso significa que os dados salvos no Chrome **não estarão disponíveis** no Firefox, e vice-versa. Da mesma forma, os dados em um computador não estarão disponíveis em outro.
--   **O Backup é a Sua Segurança!** A função de **Backup** é a ferramenta que lhe dá controle total sobre seus dados. Ela exporta tudo para um único arquivo `.sqlite` que você pode salvar em qualquer lugar (pen drive, nuvem, etc.). Este arquivo é a sua garantia de segurança e a forma de **mover seus dados** para outro navegador ou computador.
-
-**Conclusão:** Faça backups regularmente. É a única maneira de proteger seus dados contra imprevistos (como limpar o cache do navegador ou problemas no computador) e de garantir a portabilidade.
+-   **Processo Principal (Node.js):** Um "motor" invisível que roda em segundo plano, gerenciando o banco de dados SQLite e tendo acesso seguro ao sistema de arquivos. Isso torna as operações de dados mais rápidas e seguras.
+-   **Processo de Renderização (React):** A interface gráfica que você vê e interage, agora livre de responsabilidades de gerenciamento de dados, focando apenas em oferecer a melhor experiência de uso.
+-   **Dados Desacoplados do Navegador:** O maior benefício. Seu banco de dados (`sindicato.sqlite`) é um arquivo real no seu computador. Ele não pode ser apagado acidentalmente ao limpar o cache do navegador e é facilmente transferível.
 
 ---
 
 ## ✨ Funcionalidades Principais
 
-O sistema é dividido em módulos intuitivos para cobrir todas as necessidades de gestão do sindicato:
+Todas as funcionalidades que você já conhece foram aprimoradas pela nova plataforma:
 
--   **💾 Gerenciamento de Dados e Backup:**
-    -   **Armazenamento Automático:** O sistema utiliza o banco de dados interno do navegador (IndexedDB) para salvar todas as informações. As alterações são persistidas automaticamente.
-    -   **Funcionamento Offline:** Após o primeiro carregamento, a aplicação funciona completamente sem conexão com a internet.
-    -   **Backup em um Clique:** Gere um backup completo de todos os seus dados em um único arquivo `.sqlite`.
-    -   **Restauração Segura:** Restaure o sistema a um estado anterior utilizando um arquivo de backup. Esta funcionalidade substitui todos os dados atuais e é a forma de migrar o sistema para um novo computador ou navegador.
+-   **💾 Gestão de Dados Robusta:**
+    -   **Instalação Simples:** Baixe e execute o instalador para ter o sistema pronto em segundos.
+    -   **Dados 100% Locais e Privados:** O banco de dados fica armazenado em uma pasta segura do seu perfil de usuário.
+    -   **Backup e Restauração Simplificados:** Fazer backup é tão simples quanto copiar um arquivo. Restaurar é apenas colar o arquivo de volta.
+    -   **Funcionamento Totalmente Offline:** Nenhuma conexão com a internet é necessária.
 
 -   **👤 Gestão de Associados:**
-    -   Cadastro completo de associados com informações pessoais, de contato, data de filiação e foto.
-    -   Edição, exclusão e busca rápida por nome ou CPF.
-    -   Controle de status do associado (Ativo, Inativo, Suspenso) e **indicador visual de inadimplência**.
-    -   Gerenciamento de documentos digitalizados por associado.
-    -   **Registro de Atendimentos:** Mantenha um histórico de todas as interações e ocorrências com cada associado.
+    -   Cadastro completo, edição, exclusão e busca rápida.
+    -   Controle de status (Ativo, Inativo, Suspenso) e indicador visual de inadimplência.
+    -   Gerenciamento de documentos e histórico de atendimentos por associado.
 
 -   **💵 Gestão Financeira:**
-    -   **Fluxo de Caixa:** Uma visão unificada de todas as receitas (pagamentos) e despesas, com filtros por período.
-    -   Lançamento de pagamentos mensais e geração de recibos em PDF.
-    -   Cadastro de todas as despesas do sindicato.
+    -   Fluxo de Caixa completo com filtros de período.
+    -   Lançamento de pagamentos e despesas.
+    -   Geração de recibos em PDF com um clique.
 
 -   **📄 Comunicação e Documentos:**
-    -   **Mala Direta e Etiquetas:** Gere etiquetas de endereçamento prontas para impressão.
-    -   **Integração com WhatsApp:** Envie mensagens rapidamente para os associados.
-    -   Emissão de **Declaração de Vínculo Associativo** e **Declaração de Situação de Pagamento** em PDF, com templates personalizáveis.
+    -   Geração de etiquetas de Mala Direta prontas para impressão.
+    -   Integração com WhatsApp para contato rápido.
+    -   Emissão de Declarações em PDF com templates personalizáveis.
 
--   **📊 Relatórios:**
-    -   Relatórios mensais de pagantes e inadimplentes.
-    -   Balanço financeiro anual consolidando receitas e despesas.
-
--   **🔐 Administração e Experiência de Uso:**
-    -   **Modo Escuro:** Alterne entre temas claro e escuro.
-    -   Sistema de autenticação com dois níveis de acesso: **Administrador** e **Usuário**.
-    -   Painel de configurações para personalizar informações do sindicato.
-    -   Gerenciamento de usuários e ferramentas de diagnóstico do sistema (apenas para administradores).
+-   **📊 Relatórios e Administração:**
+    -   Relatórios financeiros e de associados.
+    -   Painel de administração para configurar o sistema, gerenciar usuários e templates de documentos.
 
 ---
 
-## 🚀 Como Começar a Usar
+## 🚀 Como Instalar e Usar
 
-1.  **Baixe e Extraia:** Baixe o projeto como um arquivo ZIP e extraia-o para uma pasta permanente no seu computador (ex: `Meus Documentos/Sistema Sindicato`).
-2.  **Abra o `index.html`:** Dê um duplo clique no arquivo `index.html`. O sistema será aberto no seu navegador.
-3.  **Adicione aos Favoritos:** Adicione esta página aos favoritos para acesso rápido.
-4.  **Login:** Na primeira vez, o sistema criará um banco de dados vazio. Use as credenciais padrão para entrar:
+1.  **Baixar o Instalador:** Faça o download do instalador compatível com seu sistema operacional (ex: `SindicatoGestao-Setup-8.0.0.exe` para Windows).
+2.  **Instalar:** Execute o arquivo baixado e siga as instruções. O programa será instalado e um atalho será criado na sua área de trabalho.
+3.  **Abrir o Aplicativo:** Clique no ícone do programa para iniciar.
+4.  **Login:** Na primeira vez, use as credenciais padrão:
     -   **Administrador:** `username: admin` | `password: admin`
-5.  **Comece a Usar:** Cadastre seus associados, pagamentos, etc. Tudo é salvo automaticamente.
-6.  **Faça seu Primeiro Backup:** Assim que tiver inserido alguns dados, vá para a barra lateral e clique em **"Backup (Salvar Arquivo)"**. Salve o arquivo `.sqlite` em um local seguro. Crie o hábito de fazer isso regularmente.
-
-### 🔄 Como Mudar de Computador ou Navegador (Migração de Dados)
-
-Este é um processo simples usando o sistema de Backup/Restauração.
-
-1.  **No Computador/Navegador Antigo:**
-    -   Abra o sistema e faça um **Backup**, salvando o arquivo `.sqlite` em um pen drive ou serviço de nuvem.
-
-2.  **No Computador/Navegador Novo:**
-    -   Abra o arquivo `index.html` (o sistema estará vazio).
-    -   Faça login como `admin`.
-    -   Vá para a página de **Administração**.
-    -   Na seção "Zona de Perigo", clique em **"Restaurar"**.
-    -   Selecione o arquivo de backup `.sqlite` que você salvou.
-    -   Confirme a operação. **Atenção:** Isso substituirá todos os dados atuais no novo local.
-    -   Pronto! Após a recarga, todos os seus dados estarão disponíveis no novo local.
+5.  **Comece a Usar:** O sistema está pronto. Todos os dados serão salvos automaticamente no seu computador.
 
 ---
 
-## 🛠️ Ferramentas e Tecnologias
+## 🔄 Backup, Restauração e Migração
 
+O processo agora é muito mais simples e seguro.
+
+### Onde Ficam os Dados?
+
+O sistema salva seu banco de dados em um único arquivo chamado `sindicato.sqlite`. Ele está localizado em uma pasta padrão de dados de aplicativos no seu computador:
+-   **Windows:** `C:\Users\SEU_USUARIO\AppData\Roaming\Sindicato Gestão`
+-   **macOS:** `/Users/SEU_USUARIO/Library/Application Support/Sindicato Gestão`
+-   **Linux:** `~/.config/Sindicato Gestão`
+
+### Como Fazer Backup
+
+No menu lateral, clique em **"Backup (Salvar Arquivo)"**. Uma janela do sistema será aberta para que você escolha onde salvar o seu arquivo de backup. Salve-o em um local seguro (pen drive, HD externo, Google Drive, etc.).
+
+### Como Restaurar ou Migrar para Outro Computador
+
+1.  Instale o sistema no novo computador.
+2.  Abra o menu de **Administração**.
+3.  Na seção "Zona de Perigo", clique no botão **"Restaurar"**.
+4.  Selecione o seu arquivo de backup (`sindicato.sqlite`).
+5.  Confirme a operação. O aplicativo será reiniciado com todos os seus dados restaurados.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+-   **Plataforma Desktop:**
+    -   **Electron:** Permite criar aplicações de desktop com tecnologias web.
+    -   **Node.js:** Para o "motor" da aplicação e acesso ao sistema.
 -   **Interface e Lógica:**
     -   **React & TypeScript:** Para uma interface de usuário rápida, moderna e com código seguro.
     -   **Tailwind CSS:** Para um design limpo e responsivo.
--   **Armazenamento de Dados Offline:**
-    -   **IndexedDB & Dexie.js:** O coração do sistema. Armazena os dados localmente no navegador, garantindo performance e funcionamento 100% offline.
--   **Backup e Portabilidade:**
-    -   **SQLite (via sql.js):** Permite que o banco de dados inteiro seja exportado para um único arquivo `.sqlite` e restaurado a partir dele, garantindo a portabilidade dos dados.
+-   **Armazenamento de Dados:**
+    -   **SQLite:** O banco de dados relacional mais utilizado no mundo, embutido diretamente na aplicação via `sqlite3`.
 -   **Geração de Documentos e Ícones:**
-    -   **jsPDF & jsPDF-AutoTable:** Para a criação de relatórios e declarações em PDF.
+    -   **jsPDF:** Para a criação de relatórios e declarações em PDF.
     -   **Lucide Icons:** Para uma iconografia clara e moderna.
 
 ---
 
-## 📂 Estrutura do Projeto
+## 👨‍💻 Para Desenvolvedores
+
+Para rodar o projeto em modo de desenvolvimento:
+
+```bash
+# 1. Clone o repositório e entre na pasta
+# (Assumindo que você tenha o Node.js e npm instalados)
+
+# 2. Instale as dependências
+npm install
+
+# 3. Inicie a aplicação em modo de desenvolvimento
+npm start
+
+# 4. Para criar os instaladores (Windows, macOS, Linux)
+npm run make
+```
+
+---
+
+## 📂 Estrutura do Projeto (Electron)
 
 ```
 /
-├── components/         # Componentes React reutilizáveis
-├── pages/              # Componentes de página (Dashboard, Clients, Admin)
-├── services/           # Módulos de serviço (sqliteService.ts, db.ts, pdfService.ts)
-├── types.ts            # Definições de tipos TypeScript
-├── App.tsx             # Componente principal da aplicação
-├── index.html          # Ponto de entrada da aplicação
-├── index.tsx           # Ponto de montagem do React
-└── README.md           # Este arquivo
+├── out/                  # Arquivos de instalação gerados
+├── src/                  # Código fonte da interface (Renderer Process)
+│   ├── components/
+│   ├── pages/
+│   ├── services/
+│   ├── types.ts
+│   ├── App.tsx
+│   └── index.tsx
+├── main.js               # Ponto de entrada do Electron (Main Process)
+├── preload.js            # Ponte segura entre Main e Renderer
+├── package.json          # Dependências e scripts do projeto
+└── README.md             # Este arquivo
 ```
 ---
 ## 📜 Licença

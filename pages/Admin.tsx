@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { sqliteService } from '../services/sqliteService';
@@ -147,14 +148,13 @@ const Admin: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [showWipeModal, setShowWipeModal] = useState(false);
-    const restoreInputRef = useRef<HTMLInputElement>(null);
-
+    
     const [newUsername, setNewUsername] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [newRole, setNewRole] = useState<'admin' | 'user'>('user');
     const [users, setUsers] = useState<User[]>([]);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
-    const [fileToRestore, setFileToRestore] = useState<File | null>(null);
+    const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
 
     const associationPlaceholders = [
         { label: "Nome", value: "{{NOME_ASSOCIADO}}" },
@@ -174,7 +174,11 @@ const Admin: React.FC = () => {
         try {
             const settingsArray = await sqliteService.getAll<Setting>('settings');
             const settingsObj = settingsArray.reduce((acc, setting) => {
-                acc[setting.key] = setting.value;
+                try {
+                    acc[setting.key] = JSON.parse(setting.value);
+                } catch(e) {
+                    acc[setting.key] = setting.value;
+                }
                 return acc;
             }, {} as { [key: string]: any });
             setSettings(settingsObj);
@@ -208,7 +212,7 @@ const Admin: React.FC = () => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, [isLoading, users, stats, userToDelete, fileToRestore, settings]);
+    }, [isLoading, users, stats, userToDelete, settings, showRestoreConfirm]);
 
     const handleSettingsChange = (key: string, value: string) => {
         setSettings(prev => ({ ...prev, [key]: value }));
@@ -249,7 +253,7 @@ const Admin: React.FC = () => {
                 username: newUsername.trim(),
                 password: newPassword,
                 role: newRole,
-                createdAt: new Date(),
+                createdAt: new Date().toISOString(),
             });
             toastService.show('success', 'Sucesso!', 'Novo usuário adicionado.');
             setNewUsername('');
@@ -334,37 +338,27 @@ const Admin: React.FC = () => {
         }
     };
     
-    const handleRestoreBackupClick = () => {
-        restoreInputRef.current?.click();
-    };
-
-    const handleRestoreFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setFileToRestore(file);
-        }
-        if (event.target) {
-            event.target.value = '';
-        }
-    };
-
     const handleConfirmRestore = async () => {
-        if (!fileToRestore) return;
+        setShowRestoreConfirm(false);
         try {
-            await sqliteService.restoreDatabaseFromFile(fileToRestore);
-            toastService.show('success', 'Restauração Concluída', 'O banco de dados foi restaurado. A página será recarregada em 5 segundos.');
-            setTimeout(() => window.location.reload(), 5000);
+            const result = await sqliteService.restoreDatabaseFromFile();
+            if(result.success) {
+                toastService.show('success', 'Restauração Concluída', 'O banco de dados foi restaurado. A aplicação será reiniciada.');
+                // In a real Electron app, we might send a message back to main to reload.
+                // For now, a delayed reload simulates this.
+                setTimeout(() => window.location.reload(), 3000);
+            } else if (result.message && !result.message.includes('cancelada')) {
+                toastService.show('error', 'Erro de Restauração', result.message);
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : "Um erro desconhecido ocorreu.";
             toastService.show('error', 'Erro de Restauração', message);
-        } finally {
-            setFileToRestore(null);
         }
     };
 
     const handleTestClientDeletion = async () => {
         const testId = `TEST_${Date.now()}`;
-        const mockClient: Omit<Client, 'id' | 'createdAt' | 'updatedAt'> & { createdAt: Date, updatedAt: Date } = {
+        const mockClient: Omit<Client, 'id' | 'createdAt' | 'updatedAt'> & { createdAt: string, updatedAt: string } = {
             nomeCompleto: `Associado Teste ${testId}`,
             cpf: `000.000.${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 90) + 10}`,
             rg: '1234567',
@@ -373,8 +367,8 @@ const Admin: React.FC = () => {
             email: 'teste@teste.com',
             dataFiliacao: '2023-01-01',
             status: 'Ativo',
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         };
         let newClientId: number | undefined;
     
@@ -383,7 +377,6 @@ const Admin: React.FC = () => {
     
             // 1. Inserir associado
             console.log('Passo 1: Inserindo associado de teste...');
-            // FIX: Handle Dexie.IndexableType return from insert and ensure we have a number for the client ID.
             const insertedId = await sqliteService.insert('clients', mockClient);
             if (typeof insertedId !== 'number') {
                 throw new Error('Falha ao inserir associado de teste. O ID retornado não é um número.');
@@ -435,14 +428,7 @@ const Admin: React.FC = () => {
     return (
         <div className="dark:text-gray-100">
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">Administração</h1>
-            <input
-                type="file"
-                ref={restoreInputRef}
-                className="hidden"
-                accept=".sqlite,.db,.sqlite3"
-                onChange={handleRestoreFileSelected}
-            />
-
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* User Management Card */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl transition-shadow duration-300 hover:shadow-2xl">
@@ -542,7 +528,7 @@ const Admin: React.FC = () => {
                                 <p className="font-medium text-gray-800 dark:text-gray-100">Restaurar Backup</p>
                                 <p className="text-xs text-gray-600 dark:text-gray-300">Substitui todos os dados por um arquivo de backup.</p>
                             </div>
-                            <button onClick={handleRestoreBackupClick} className="px-3 py-1.5 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors shadow-sm">
+                            <button onClick={() => setShowRestoreConfirm(true)} className="px-3 py-1.5 text-sm bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors shadow-sm">
                                 Restaurar
                             </button>
                          </div>
@@ -653,18 +639,18 @@ const Admin: React.FC = () => {
                 onCancel={() => setUserToDelete(null)}
                 confirmText="Sim, Excluir"
             />
-            <ConfirmationModal
-                show={!!fileToRestore}
+             <ConfirmationModal
+                show={showRestoreConfirm}
                 title="Confirmar Restauração de Backup"
                 message={
                     <>
-                        <p>Você está prestes a restaurar o backup do arquivo <strong>{fileToRestore?.name}</strong>.</p>
+                        <p>Uma janela para seleção de arquivo será aberta.</p>
                         <p className="mt-2 text-red-700 font-bold dark:text-red-400">Esta ação irá substituir TODOS os dados atuais no sistema. A operação não pode ser desfeita.</p>
                         <p className="mt-2">Deseja continuar?</p>
                     </>
                 }
                 onConfirm={handleConfirmRestore}
-                onCancel={() => setFileToRestore(null)}
+                onCancel={() => setShowRestoreConfirm(null)}
                 confirmText="Sim, Restaurar Backup"
                 confirmButtonClass="bg-amber-500 hover:bg-amber-600"
             />
