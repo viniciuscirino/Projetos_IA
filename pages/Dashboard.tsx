@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
+import React, { useState, useEffect, useCallback } from 'react';
+import { sqliteService } from '../services/sqliteService';
 import type { Payment, Client } from '../types';
 
 const StatCard: React.FC<{ icon: string; title: string; value: string | number; color: string }> = ({ icon, title, value, color }) => (
@@ -17,14 +16,24 @@ const StatCard: React.FC<{ icon: string; title: string; value: string | number; 
 
 
 const Dashboard: React.FC = () => {
-    const clients = useLiveQuery(() => db.clients.toArray(), []);
-    const payments = useLiveQuery(() => db.payments.toArray(), []);
-
+    const [clients, setClients] = useState<Client[]>([]);
+    const [payments, setPayments] = useState<Payment[]>([]);
     const [stats, setStats] = useState({
         totalClients: 0,
         paymentsThisMonth: 0,
         revenueThisMonth: 0,
     });
+
+    const fetchData = useCallback(async () => {
+        const clientData = await sqliteService.getAll<Client>('clients');
+        const paymentData = await sqliteService.getAll<Payment>('payments');
+        setClients(clientData);
+        setPayments(paymentData);
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     useEffect(() => {
         if (clients && payments) {
@@ -49,7 +58,7 @@ const Dashboard: React.FC = () => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, []);
+    }, [stats]);
     
     const recentPayments = payments
         ?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

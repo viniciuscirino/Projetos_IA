@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+// FIX: Use sqliteSyncService for database creation and loading.
 import { sqliteSyncService } from '../services/sqliteSyncService';
 
 interface DatabaseLoaderProps {
@@ -18,6 +19,7 @@ const DatabaseLoader: React.FC<DatabaseLoaderProps> = ({ onDbLoaded }) => {
     const handleCreateNew = async () => {
         setIsLoading(true);
         try {
+            // FIX: Correctly call createNewDatabase from sqliteSyncService.
             await sqliteSyncService.createNewDatabase();
             onDbLoaded();
         } catch (error) {
@@ -33,10 +35,15 @@ const DatabaseLoader: React.FC<DatabaseLoaderProps> = ({ onDbLoaded }) => {
 
         setIsLoading(true);
         try {
+            // FIX: Correctly call loadDatabase from sqliteSyncService.
             await sqliteSyncService.loadDatabase(file);
             onDbLoaded();
         } catch (error) {
             console.error(error);
+            // If loading fails, reset the input to allow trying the same file again
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         } finally {
             setIsLoading(false);
         }
@@ -56,7 +63,7 @@ const DatabaseLoader: React.FC<DatabaseLoaderProps> = ({ onDbLoaded }) => {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">Gerenciamento de Dados</h2>
                 <p className="text-gray-600">
-                    Para garantir a segurança dos seus dados, o sistema agora os salva em um arquivo <code className="bg-gray-200 text-sm p-1 rounded">.sqlite</code> em seu computador.
+                    Para garantir a segurança e a portabilidade dos seus dados, o sistema os salva em um único arquivo <code className="bg-gray-200 text-sm p-1 rounded">.sqlite</code> em seu computador.
                 </p>
                 <p className="text-sm text-gray-500">
                     Crie uma pasta chamada <strong className="text-emerald-700">"Banco de Dados"</strong> em um local seguro para guardar este arquivo.

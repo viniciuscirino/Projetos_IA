@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { db } from '../services/db';
-import type { Client, Payment } from '../types';
+import type { Client, Payment, Expense } from '../types';
 import { openReportInNewTab } from '../services/reportService';
+import { sqliteService } from '../services/sqliteService';
+import { toastService } from '../services/toastService';
 
 const Reports: React.FC = () => {
     const today = new Date();
@@ -17,10 +18,11 @@ const Reports: React.FC = () => {
     const generatePaidReport = useCallback(async () => {
         try {
             const reference = `${year}-${String(month).padStart(2, '0')}`;
-            const paymentsInPeriod = await db.payments.where({ referencia: reference }).toArray();
-            const clientIds = paymentsInPeriod.map(p => p.clientId);
-            const clients = await db.clients.where('id').anyOf(clientIds).toArray() as Client[];
-            const clientMap = new Map(clients.map(c => [c.id, c]));
+            const allPayments = await sqliteService.getAll<Payment>('payments');
+            const paymentsInPeriod = allPayments.filter(p => p.referencia === reference);
+
+            const allClients = await sqliteService.getAll<Client>('clients');
+            const clientMap = new Map(allClients.map(c => [c.id, c]));
 
             const data = paymentsInPeriod.map(p => {
                 const client = clientMap.get(p.clientId);
@@ -44,18 +46,22 @@ const Reports: React.FC = () => {
 
         } catch (error) {
             console.error("Error generating paid report:", error);
-            alert("Erro ao gerar relatório de pagantes.");
+            toastService.show('error', 'Erro!', 'Falha ao gerar o relatório de pagantes.');
         }
     }, [month, year]);
 
     const generateUnpaidReport = useCallback(async () => {
         try {
-            const allClients = await db.clients.where({ status: 'Ativo' }).toArray();
+            const allClients = await sqliteService.getAll<Client>('clients');
+            const activeClients = allClients.filter(c => c.status === 'Ativo');
+
             const reference = `${year}-${String(month).padStart(2, '0')}`;
-            const paymentsInPeriod = await db.payments.where({ referencia: reference }).toArray();
+            const allPayments = await sqliteService.getAll<Payment>('payments');
+            const paymentsInPeriod = allPayments.filter(p => p.referencia === reference);
+            
             const paidClientIds = new Set(paymentsInPeriod.map(p => p.clientId));
             
-            const unpaidClients = allClients.filter(c => !paidClientIds.has(c.id!));
+            const unpaidClients = activeClients.filter(c => !paidClientIds.has(c.id!));
             
             const data = unpaidClients.map(c => ({
                 nome: c.nomeCompleto,
@@ -72,18 +78,20 @@ const Reports: React.FC = () => {
             openReportInNewTab(title, columns, data);
         } catch (error) {
             console.error("Error generating unpaid report:", error);
-            alert("Erro ao gerar relatório de inadimplentes.");
+            toastService.show('error', 'Erro!', 'Falha ao gerar o relatório de inadimplentes.');
         }
     }, [month, year]);
 
     const generateFinancialBalanceReport = useCallback(async () => {
         try {
-            // Dexie's `startsWith` is for string indexes. For dates within a year, we need to query between the start and end of the year.
             const startDate = `${year}-01-01`;
             const endDate = `${year}-12-31`;
             
-            const paymentsInYear = await db.payments.where('dataPagamento').between(startDate, endDate, true, true).toArray();
-            const expensesInYear = await db.expenses.where('date').between(startDate, endDate, true, true).toArray();
+            const allPayments = await sqliteService.getAll<Payment>('payments');
+            const allExpenses = await sqliteService.getAll<Expense>('expenses');
+
+            const paymentsInYear = allPayments.filter(p => p.dataPagamento >= startDate && p.dataPagamento <= endDate);
+            const expensesInYear = allExpenses.filter(e => e.date >= startDate && e.date <= endDate);
 
             const totalRevenue = paymentsInYear.reduce((sum, p) => sum + p.valor, 0);
             const totalExpenses = expensesInYear.reduce((sum, e) => sum + e.amount, 0);
@@ -124,7 +132,7 @@ const Reports: React.FC = () => {
 
         } catch(error) {
             console.error("Error generating financial report:", error);
-            alert("Erro ao gerar balanço financeiro.");
+            toastService.show('error', 'Erro!', 'Falha ao gerar o balanço financeiro.');
         }
     }, [year]);
 

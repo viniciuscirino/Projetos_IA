@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../services/db';
+import { sqliteService } from '../services/sqliteService';
+import { toastService } from '../services/toastService';
+import type { User } from '../types';
 
 interface LoginProps {
   onLogin: (username: string, role: string) => void;
@@ -8,7 +10,6 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (window.lucide) {
@@ -19,16 +20,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        const user = await db.users.where('username').equals(username).first();
+        const user = await sqliteService.getUserByUsername(username) as User | null;
         if (user && user.password === password) {
-          setError('');
           onLogin(user.username, user.role);
         } else {
-          setError('Usuário ou senha inválidos.');
+          toastService.show('error', 'Acesso Negado', 'Usuário ou senha inválidos.');
         }
     } catch (err) {
         console.error("Login failed:", err);
-        setError('Ocorreu um erro ao tentar fazer login.');
+        toastService.show('error', 'Erro de Login', 'Ocorreu um erro ao tentar fazer login. Tente novamente.');
     }
   };
 
@@ -70,8 +70,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             />
           </div>
           
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-
           <div>
             <button
               type="submit"

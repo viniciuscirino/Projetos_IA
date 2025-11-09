@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { sqliteService } from '../services/sqliteService';
+import { toastService } from '../services/toastService';
 import type { Expense } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const ExpenseForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
     const today = new Date().toISOString().split('T')[0];
@@ -15,13 +16,14 @@ const ExpenseForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
         if (!description || !category || amount === '') return;
         
         try {
-            await db.expenses.add({
+            await sqliteService.insert('expenses', {
                 description,
                 category,
                 amount: Number(amount),
                 date,
-                createdAt: new Date()
+                createdAt: new Date().toISOString()
             });
+            toastService.show('success', 'Sucesso!', 'Despesa registrada com sucesso.');
             // Reset form
             setDescription('');
             setCategory('');
@@ -30,7 +32,7 @@ const ExpenseForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
             onSave();
         } catch(error) {
             console.error("Failed to save expense:", error);
-            alert("Erro ao salvar despesa.");
+            toastService.show('error', 'Erro!', 'Ocorreu um erro ao salvar a despesa.');
         }
     };
     
@@ -59,7 +61,19 @@ const ExpenseForm: React.FC<{ onSave: () => void }> = ({ onSave }) => {
 
 const Expenses: React.FC = () => {
     const [filter, setFilter] = useState('');
-    const expenses = useLiveQuery(() => db.expenses.orderBy('date').reverse().toArray(), []);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+
+    const fetchExpenses = useCallback(async () => {
+        const expenseData = await sqliteService.getAll<Expense>('expenses');
+        const sortedExpenses = expenseData.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setExpenses(sortedExpenses);
+    }, []);
+
+    useEffect(() => {
+        fetchExpenses();
+    }, [fetchExpenses]);
+
 
     const filteredExpenses = useMemo(() => {
         if (!expenses) return [];
@@ -74,11 +88,18 @@ const Expenses: React.FC = () => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, [filteredExpenses]);
+    }, [filteredExpenses, expenseToDelete]);
 
-    const handleDelete = async (id: number) => {
-        if (window.confirm("Tem certeza que deseja excluir esta despesa?")) {
-            await db.expenses.delete(id);
+    const handleConfirmDelete = async () => {
+        if (!expenseToDelete) return;
+        try {
+            await sqliteService.delete('expenses', expenseToDelete.id!);
+            toastService.show('success', 'Sucesso!', 'Despesa excluída com sucesso.');
+            fetchExpenses(); // Refresh the list
+        } catch (error) {
+            toastService.show('error', 'Erro!', 'Falha ao excluir a despesa.');
+        } finally {
+            setExpenseToDelete(null);
         }
     };
     
@@ -86,7 +107,7 @@ const Expenses: React.FC = () => {
         <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Despesas</h1>
             
-            <ExpenseForm onSave={() => {}} />
+            <ExpenseForm onSave={fetchExpenses} />
 
             <div className="mt-8 bg-white rounded-lg shadow-lg">
                  <div className="p-4">
@@ -117,7 +138,7 @@ const Expenses: React.FC = () => {
                                     <td className="p-3">R$ {e.amount.toFixed(2)}</td>
                                     <td className="p-3">{new Date(e.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                                     <td className="p-3">
-                                        <button onClick={() => handleDelete(e.id!)} className="text-red-500 hover:text-red-700 p-1 transition-transform transform hover:scale-125" title="Excluir"><i data-lucide="trash-2" className="w-4 h-4 pointer-events-none"></i></button>
+                                        <button onClick={() => setExpenseToDelete(e)} className="text-red-500 hover:text-red-700 p-1 transition-transform transform hover:scale-125" title="Excluir"><i data-lucide="trash-2" className="w-4 h-4 pointer-events-none"></i></button>
                                     </td>
                                 </tr>
                             ))}
@@ -125,6 +146,19 @@ const Expenses: React.FC = () => {
                     </table>
                 </div>
             </div>
+            <ConfirmationModal
+                show={!!expenseToDelete}
+                title="Confirmar Exclusão de Despesa"
+                message={
+                    <>
+                        <p>Tem certeza que deseja excluir a despesa:</p>
+                        <p className="font-semibold my-2 bg-gray-100 p-2 rounded">{expenseToDelete?.description}</p>
+                    </>
+                }
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setExpenseToDelete(null)}
+                confirmText="Sim, Excluir"
+            />
         </div>
     );
 };

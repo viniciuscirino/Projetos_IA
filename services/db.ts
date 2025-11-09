@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Client, Payment, DeclarationLog, Expense, Document, Setting, User } from '../types';
+import type { Client, Payment, DeclarationLog, Expense, Document, Setting, User, Attendance } from '../types';
 
 export class SindicatoDB extends Dexie {
   clients!: Table<Client>;
@@ -9,6 +9,7 @@ export class SindicatoDB extends Dexie {
   documents!: Table<Document>;
   settings!: Table<Setting>;
   users!: Table<User>;
+  attendances!: Table<Attendance>;
 
   constructor() {
     super('sindicatoDB');
@@ -67,6 +68,33 @@ export class SindicatoDB extends Dexie {
             }
         });
     });
+    
+    // Version 7: Add 'attendances' table for logging client interactions.
+    (this as Dexie).version(7).stores({
+        attendances: '++id, clientId, createdAt'
+    });
+
+    // Version 8: Add payment declaration template and convert existing template to HTML
+    (this as Dexie).version(8).stores({
+        // No schema changes, just a data upgrade
+    }).upgrade(async (tx) => {
+        // Add payment declaration template if it doesn't exist
+        const paymentTemplateExists = await tx.table('settings').get('paymentDeclarationTemplate');
+        if (!paymentTemplateExists) {
+            await tx.table('settings').add({
+                key: 'paymentDeclarationTemplate',
+                value: `<p>Declaramos, para os devidos fins, que o(a) Sr(a). {{NOME_ASSOCIADO}}, inscrito(a) no CPF sob o nº {{CPF}}, associado(a) desta entidade, encontra-se em dia com suas obrigações financeiras, tendo o último pagamento registrado referente à competência de <b>{{MES_ULTIMO_PAGAMENTO}} de {{ANO_ULTIMO_PAGAMENTO}}</b>.</p><p>Por ser expressão da verdade, firmamos a presente declaração.</p>`
+            });
+        }
+
+        // Update existing association declaration to use HTML
+        const associationTemplate = await tx.table('settings').get('declarationTemplate');
+        if (associationTemplate && typeof associationTemplate.value === 'string' && !associationTemplate.value.startsWith('<p>')) {
+            const oldValue = associationTemplate.value;
+            const newValue = oldValue.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+            await tx.table('settings').update('declarationTemplate', { value: newValue });
+        }
+    });
 
     // The 'populate' event is only triggered when the database is created for the first time.
     // FIX: Cast 'this' to Dexie to resolve a TypeScript error where the inherited 'on' method was not found on the SindicatoDB subclass.
@@ -85,7 +113,8 @@ export class SindicatoDB extends Dexie {
             { key: 'syndicateCnpj', value: '00.000.000/0001-00' },
             { key: 'syndicateAddress', value: 'Rua da Sede, nº 123, Centro, Indiaroba/SE, CEP 49250-000' },
             { key: 'syndicatePhone', value: '(79) 99999-9999' },
-            { key: 'declarationTemplate', value: `Declaramos, para os devidos fins a que se fizerem necessários, que o(a) Sr(a). {{NOME_ASSOCIADO}}, inscrito(a) no Cadastro de Pessoas Físicas (CPF) sob o nº {{CPF}} e portador(a) da Cédula de Identidade (RG) nº {{RG}}, é membro(a) associado(a) desta entidade sindical, filiado(a) desde {{DATA_FILIACAO}}.\n\nNada consta que desabone sua condição de associado(a) até a presente data.\n\nPor ser expressão da verdade, firmamos a presente declaração.` },
+            { key: 'declarationTemplate', value: `<p>Declaramos, para os devidos fins, que o(a) Sr(a). {{NOME_ASSOCIADO}}, portador(a) do RG nº {{RG}} e inscrito(a) no CPF sob o nº {{CPF}}, encontra-se regularmente filiado(a) a esta entidade sindical, na qualidade de membro associado(a) desde {{DATA_FILIACAO}}.</p><p>Declaramos ainda que, até a presente data, não constam em nossos registros quaisquer fatos que desabonem sua condição de associado(a).</p><p>Por ser expressão da verdade, firmamos a presente declaração.</p>` },
+            { key: 'paymentDeclarationTemplate', value: `<p>Declaramos, para os devidos fins, que o(a) Sr(a). {{NOME_ASSOCIADO}}, inscrito(a) no CPF sob o nº {{CPF}}, associado(a) desta entidade, encontra-se em dia com suas obrigações financeiras, tendo o último pagamento registrado referente à competência de <b>{{MES_ULTIMO_PAGAMENTO}} de {{ANO_ULTIMO_PAGAMENTO}}</b>.</p><p>Por ser expressão da verdade, firmamos a presente declaração.</p>` },
             { key: 'syndicateSignature', value: '' } // Base64 encoded signature image
         ];
         await this.settings.bulkAdd(defaultSettings);

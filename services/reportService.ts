@@ -1,7 +1,7 @@
-import { db } from './db';
+import { sqliteService } from './sqliteService';
 
 const getSyndicateName = async () => {
-    const setting = await db.settings.get('syndicateName');
+    const setting = await sqliteService.getSetting('syndicateName');
     return setting?.value || 'Sindicato Rural de Indiaroba';
 };
 

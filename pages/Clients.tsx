@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-// FIX: Import Dexie for type casting to resolve inherited method errors.
-import Dexie from 'dexie';
-import { db } from '../services/db';
-import type { Client, Document } from '../types';
+import { sqliteService } from '../services/sqliteService';
+import { toastService } from '../services/toastService';
+import type { Client, Document, Attendance, Payment } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -76,16 +75,17 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
         e.preventDefault();
         try {
             if (client?.id) {
-                await db.clients.update(client.id, { ...formData, updatedAt: new Date() });
-                alert('Associado atualizado com sucesso!');
+                await sqliteService.update('clients', client.id, { ...formData, updatedAt: new Date().toISOString() });
+                toastService.show('success', 'Sucesso!', 'Associado atualizado com sucesso!');
             } else {
-                await db.clients.add({ ...formData, createdAt: new Date(), updatedAt: new Date() });
-                alert('Associado cadastrado com sucesso!');
+                const newClient = { ...formData, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+                await sqliteService.insert('clients', newClient);
+                toastService.show('success', 'Sucesso!', 'Associado cadastrado com sucesso!');
             }
             onSave();
         } catch (error) {
             console.error("Failed to save client:", error);
-            alert("Erro ao salvar associado. Verifique se o CPF já está cadastrado.");
+            toastService.show('error', 'Erro!', 'Falha ao salvar associado. Verifique se o CPF já está cadastrado.');
         }
     };
     
@@ -94,44 +94,44 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 {/* Nome Completo */}
                 <div className="md:col-span-2">
-                    <label htmlFor="nomeCompleto" className="block text-sm font-medium text-gray-700">Nome Completo</label>
-                    <input id="nomeCompleto" name="nomeCompleto" value={formData.nomeCompleto} onChange={handleChange} placeholder="Nome Completo do Associado" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                    <label htmlFor="nomeCompleto" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome Completo</label>
+                    <input id="nomeCompleto" name="nomeCompleto" value={formData.nomeCompleto} onChange={handleChange} placeholder="Nome Completo do Associado" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
                 </div>
 
                 {/* CPF */}
                 <div>
-                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700">CPF</label>
-                    <input id="cpf" name="cpf" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" maxLength={14} />
+                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 dark:text-gray-300">CPF</label>
+                    <input id="cpf" name="cpf" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" maxLength={14} />
                 </div>
 
                 {/* RG */}
                 <div>
-                    <label htmlFor="rg" className="block text-sm font-medium text-gray-700">RG</label>
-                    <input id="rg" name="rg" value={formData.rg} onChange={handleChange} placeholder="RG" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                    <label htmlFor="rg" className="block text-sm font-medium text-gray-700 dark:text-gray-300">RG</label>
+                    <input id="rg" name="rg" value={formData.rg} onChange={handleChange} placeholder="RG" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
                 </div>
 
                 {/* Telefone */}
                 <div>
-                    <label htmlFor="telefone" className="block text-sm font-medium text-gray-700">Telefone</label>
-                    <input id="telefone" name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(99) 99999-9999" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" maxLength={15} />
+                    <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefone</label>
+                    <input id="telefone" name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(99) 99999-9999" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" maxLength={15} />
                 </div>
 
                 {/* E-mail */}
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">E-mail</label>
-                    <input id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="email@exemplo.com" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">E-mail</label>
+                    <input id="email" name="email" value={formData.email} onChange={handleChange} type="email" placeholder="email@exemplo.com" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
                 </div>
                 
                 {/* Data de Filiação */}
                 <div>
-                    <label htmlFor="dataFiliacao" className="block text-sm font-medium text-gray-700">Data de Filiação</label>
-                    <input id="dataFiliacao" name="dataFiliacao" value={formData.dataFiliacao} onChange={handleChange} type="date" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                    <label htmlFor="dataFiliacao" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Data de Filiação</label>
+                    <input id="dataFiliacao" name="dataFiliacao" value={formData.dataFiliacao} onChange={handleChange} type="date" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
                 </div>
                 
                 {/* Status */}
                 <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                    <select id="status" name="status" value={formData.status} onChange={handleChange} className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition h-[42px]">
+                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                    <select id="status" name="status" value={formData.status} onChange={handleChange} className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition h-[42px] bg-transparent dark:border-gray-600 dark:bg-gray-800">
                         <option value="Ativo">Ativo</option>
                         <option value="Inativo">Inativo</option>
                         <option value="Suspenso">Suspenso</option>
@@ -140,20 +140,20 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
 
                 {/* Foto */}
                 <div className="md:col-span-2">
-                    <label htmlFor="foto" className="block text-sm font-medium text-gray-700">Foto</label>
-                    <input id="foto" type="file" onChange={handleFileChange} accept="image/*" className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"/>
+                    <label htmlFor="foto" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Foto</label>
+                    <input id="foto" type="file" onChange={handleFileChange} accept="image/*" className="mt-1 block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-gray-700 dark:file:text-emerald-300 dark:hover:file:bg-gray-600 cursor-pointer"/>
                 </div>
 
                 {/* Endereço */}
                 <div className="md:col-span-2">
-                    <label htmlFor="endereco" className="block text-sm font-medium text-gray-700">Endereço</label>
-                    <input id="endereco" name="endereco" value={formData.endereco} onChange={handleChange} placeholder="Endereço completo do associado" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition" />
+                    <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Endereço</label>
+                    <input id="endereco" name="endereco" value={formData.endereco} onChange={handleChange} placeholder="Endereço completo do associado" required className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-emerald-500 transition bg-transparent dark:border-gray-600" />
                 </div>
             </div>
             
             {/* Botões */}
             <div className="flex justify-end space-x-3 pt-4">
-                <button type="button" onClick={onCancel} className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 transform hover:scale-105">Cancelar</button>
+                <button type="button" onClick={onCancel} className="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500 transition-all duration-200 transform hover:scale-105">Cancelar</button>
                 <button type="submit" className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg">{client ? 'Atualizar Associado' : 'Salvar Associado'}</button>
             </div>
         </form>
@@ -161,24 +161,18 @@ const ClientForm: React.FC<{ client?: Client; onSave: () => void; onCancel: () =
 };
 
 const DocumentPreviewModal: React.FC<{ doc: Document; onClose: () => void }> = ({ doc, onClose }) => {
-    const [content, setContent] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [contentUrl, setContentUrl] = useState<string | null>(null);
     const modalRoot = document.getElementById('modal-root');
 
     useEffect(() => {
-        setIsLoading(true);
-        if (doc.type.startsWith('image/') || doc.type === 'application/pdf') {
-            const url = URL.createObjectURL(doc.content);
-            setContent(url);
-            setIsLoading(false);
-            return () => URL.revokeObjectURL(url);
-        } else if (doc.type.startsWith('text/')) {
-            doc.content.text().then(text => {
-                setContent(text);
-                setIsLoading(false);
-            }).catch(() => setIsLoading(false));
-        } else {
-             setIsLoading(false);
+        if (doc && doc.content) {
+            const blob = new Blob([doc.content], { type: doc.type });
+            const url = URL.createObjectURL(blob);
+            setContentUrl(url);
+
+            return () => {
+                URL.revokeObjectURL(url);
+            };
         }
     }, [doc]);
     
@@ -187,27 +181,40 @@ const DocumentPreviewModal: React.FC<{ doc: Document; onClose: () => void }> = (
             window.lucide.createIcons();
         }
     }, []);
+    
+    const handleDownload = () => {
+        if (contentUrl) {
+            const a = document.createElement('a');
+            a.href = contentUrl;
+            a.download = doc.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    };
+
 
     const renderContent = () => {
-        if (isLoading) {
+        if (!contentUrl) {
             return <div className="flex justify-center items-center h-full"><p>Carregando visualização...</p></div>;
         }
 
-        if (doc.type.startsWith('image/') && content) {
-            return <img src={content} alt={doc.name} className="max-w-full max-h-[calc(100vh-12rem)] object-contain mx-auto" />;
+        if (doc.type.startsWith('image/')) {
+            return <img src={contentUrl} alt={doc.name} className="max-w-full max-h-full object-contain" />;
         }
-        if (doc.type === 'application/pdf' && content) {
-            return <iframe src={content} className="w-full h-[calc(100vh-10rem)] border-0" title={doc.name}></iframe>;
+        
+        if (doc.type === 'application/pdf') {
+             return <iframe src={contentUrl} title={doc.name} className="w-full h-full border-0"></iframe>;
         }
-        if (doc.type.startsWith('text/') && content) {
-            return <pre className="w-full h-full p-4 bg-gray-100 rounded overflow-auto whitespace-pre-wrap text-sm">{content}</pre>;
-        }
+
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <i data-lucide="file-warning" className="w-16 h-16 text-yellow-500 mb-4"></i>
-                <h3 className="text-lg font-semibold">Visualização não disponível</h3>
-                <p className="text-gray-600">O tipo de arquivo '{doc.type}' não é suportado para visualização direta.</p>
-                <p className="text-sm text-gray-500 mt-1">Por favor, baixe o arquivo para abri-lo.</p>
+                <i data-lucide="file" className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4"></i>
+                <h3 className="text-lg font-semibold">Visualização não suportada</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">O arquivo <span className="font-mono bg-gray-100 dark:bg-gray-700 p-1 rounded text-sm">{doc.name}</span> não pode ser exibido diretamente.</p>
+                <button onClick={handleDownload} className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                   <i data-lucide="download" className="w-5 h-5 mr-2"></i> Baixar Arquivo
+                </button>
             </div>
         );
     };
@@ -216,12 +223,19 @@ const DocumentPreviewModal: React.FC<{ doc: Document; onClose: () => void }> = (
 
     return ReactDOM.createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] fade-in-backdrop" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col scale-in" onClick={(e) => e.stopPropagation()}>
-                <header className="flex items-center justify-between p-4 border-b">
-                    <h2 className="text-lg font-semibold text-gray-800 truncate" title={doc.name}>{doc.name}</h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800 transition"><i data-lucide="x" className="w-6 h-6"></i></button>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col scale-in" onClick={(e) => e.stopPropagation()}>
+                <header className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 truncate" title={doc.name}>{doc.name}</h2>
+                     <div className="flex items-center space-x-2">
+                         <button onClick={handleDownload} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition p-1" title="Baixar Arquivo">
+                            <i data-lucide="download" className="w-5 h-5"></i>
+                        </button>
+                        <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition p-1" title="Fechar">
+                            <i data-lucide="x" className="w-6 h-6"></i>
+                        </button>
+                    </div>
                 </header>
-                <div className="p-4 flex-1 overflow-auto">
+                <div className="p-4 flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
                     {renderContent()}
                 </div>
             </div>
@@ -230,104 +244,248 @@ const DocumentPreviewModal: React.FC<{ doc: Document; onClose: () => void }> = (
     );
 };
 
-const DocumentModal: React.FC<{ client: Client; onClose: () => void; onPreview: (doc: Document) => void; }> = ({ client, onClose, onPreview }) => {
-    const documents = useLiveQuery(() => db.documents.where({ clientId: client.id! }).toArray(), [client.id]);
+const ClientDetailsModal: React.FC<{ client: Client; onClose: () => void; username: string; }> = ({ client, onClose, username }) => {
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
+    const [docToDelete, setDocToDelete] = useState<Document | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const modalRoot = document.getElementById('modal-root');
+    const [activeTab, setActiveTab] = useState<'documents' | 'attendances'>('documents');
+    const [attendances, setAttendances] = useState<Attendance[]>([]);
+    const [newAttendanceNote, setNewAttendanceNote] = useState('');
+
+    const fetchDocuments = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const docs = await sqliteService.getDocumentsByClientId(client.id!);
+            setDocuments(docs);
+        } catch (error) {
+            console.error("Failed to fetch documents:", error);
+            toastService.show('error', 'Erro!', 'Falha ao buscar documentos.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [client.id]);
+
+    const fetchAttendances = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const atts = await sqliteService.getAttendancesByClientId(client.id!);
+            setAttendances(atts);
+        } catch (error) {
+            console.error("Failed to fetch attendances:", error);
+            toastService.show('error', 'Erro!', 'Falha ao buscar atendimentos.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [client.id]);
+
+    useEffect(() => {
+        if (activeTab === 'documents') {
+            fetchDocuments();
+        } else if (activeTab === 'attendances') {
+            fetchAttendances();
+        }
+    }, [activeTab, fetchDocuments, fetchAttendances]);
 
     useEffect(() => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, [documents]);
+    }, [documents, isLoading, attendances, activeTab]);
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            try {
-                await db.documents.add({
-                    clientId: client.id!,
-                    name: file.name,
-                    type: file.type,
-                    content: file,
-                    createdAt: new Date(),
-                });
-            } catch (error) {
-                console.error("Failed to upload document:", error);
-                alert("Erro ao enviar documento.");
-            }
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const content = new Uint8Array(arrayBuffer);
+            await sqliteService.insert('documents', {
+                clientId: client.id!,
+                name: file.name,
+                type: file.type || 'application/octet-stream',
+                content: content,
+                createdAt: new Date().toISOString()
+            });
+            toastService.show('success', 'Sucesso!', 'Documento enviado com sucesso!');
+            fetchDocuments();
+        } catch (error) {
+            console.error("Failed to upload document:", error);
+            toastService.show('error', 'Erro!', 'Falha ao enviar documento.');
+        } finally {
+             if (event.target) event.target.value = '';
         }
     };
 
-    const handleDelete = async (docId: number) => {
-        if (window.confirm("Tem certeza que deseja excluir este documento?")) {
-            await db.documents.delete(docId);
+    const handleConfirmDeleteDoc = async () => {
+        if (!docToDelete) return;
+        try {
+            await sqliteService.delete('documents', docToDelete.id!);
+            toastService.show('success', 'Sucesso!', 'Documento excluído com sucesso!');
+            fetchDocuments();
+        } catch (error) {
+            console.error("Failed to delete document:", error);
+            toastService.show('error', 'Erro!', 'Falha ao excluir documento.');
+        } finally {
+            setDocToDelete(null);
         }
     };
 
-    const handleDownload = (doc: Document) => {
-        const url = URL.createObjectURL(doc.content);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = doc.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const handleAddAttendance = async () => {
+        if (!newAttendanceNote.trim()) return;
+        try {
+            await sqliteService.insert('attendances', {
+                clientId: client.id!,
+                notes: newAttendanceNote,
+                createdAt: new Date().toISOString(),
+                createdBy: username,
+            });
+            toastService.show('success', 'Sucesso!', 'Atendimento registrado.');
+            setNewAttendanceNote('');
+            fetchAttendances();
+        } catch (error) {
+            toastService.show('error', 'Erro!', 'Falha ao registrar atendimento.');
+            console.error(error);
+        }
     };
 
     if (!modalRoot) return null;
 
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 fade-in-backdrop">
-            <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl scale-in">
-                <h2 className="text-xl font-bold mb-4">Documentos de {client.nomeCompleto}</h2>
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Adicionar novo documento</label>
-                    <input type="file" onChange={handleUpload} className="p-1 border rounded w-full text-sm" />
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                    <ul className="space-y-2">
-                        {documents?.map(doc => (
-                            <li key={doc.id} className="flex items-center justify-between p-2 border rounded hover:bg-gray-50 transition-colors">
-                                <span className="truncate flex-1 mr-2" title={doc.name}>{doc.name}</span>
-                                <div className="flex-shrink-0 flex items-center space-x-1">
-                                    <button onClick={() => onPreview(doc)} className="text-gray-500 p-1 transition-transform transform hover:scale-110" title="Visualizar"><i data-lucide="eye" className="w-4 h-4 pointer-events-none"></i></button>
-                                    <button onClick={() => handleDownload(doc)} className="text-blue-500 p-1 transition-transform transform hover:scale-110" title="Baixar"><i data-lucide="download" className="w-4 h-4 pointer-events-none"></i></button>
-                                    <button onClick={() => handleDelete(doc.id!)} className="text-red-500 p-1 transition-transform transform hover:scale-110" title="Excluir"><i data-lucide="trash-2" className="w-4 h-4 pointer-events-none"></i></button>
-                                </div>
-                            </li>
-                        ))}
-                         {documents?.length === 0 && <p className="text-center text-gray-500">Nenhum documento encontrado.</p>}
-                    </ul>
-                </div>
-                <div className="flex justify-end mt-4">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-all duration-200 transform hover:scale-105">Fechar</button>
+        <>
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 fade-in-backdrop">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-3xl scale-in h-[80vh] flex flex-col">
+                    <header className="flex items-start justify-between pb-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Detalhes de {client.nomeCompleto}</h2>
+                            <div className="border-b border-gray-200 dark:border-gray-700 mt-4">
+                                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                                    <button onClick={() => setActiveTab('documents')} className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'documents' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>Documentos</button>
+                                    <button onClick={() => setActiveTab('attendances')} className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'attendances' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>Atendimentos</button>
+                                </nav>
+                            </div>
+                        </div>
+                         <button onClick={onClose} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition"><i data-lucide="x" className="w-6 h-6"></i></button>
+                    </header>
+                    
+                    <div className="flex-1 overflow-y-auto mt-2 pr-2">
+                        {isLoading ? <p className="text-center text-gray-500">Carregando...</p> : (
+                            <>
+                                {activeTab === 'documents' && (
+                                    <div>
+                                        {documents.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400"><i data-lucide="folder-open" className="w-12 h-12 mx-auto mb-2"></i><p>Nenhum documento encontrado.</p></div>
+                                        ) : (
+                                            <ul className="space-y-2">
+                                                {documents.map(doc => (
+                                                    <li key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                        <div className="flex items-center truncate"><i data-lucide="file-text" className="w-5 h-5 mr-3 text-emerald-600"></i><div className="truncate"><p className="font-medium text-gray-800 dark:text-gray-200 truncate" title={doc.name}>{doc.name}</p><p className="text-xs text-gray-500 dark:text-gray-400">Adicionado em: {new Date(doc.createdAt).toLocaleDateString('pt-BR')}</p></div></div>
+                                                        <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+                                                            <button onClick={() => setPreviewingDoc(doc)} className="text-blue-500 hover:text-blue-700 p-1 transition-transform transform hover:scale-125" title="Visualizar/Baixar"><i data-lucide="eye" className="w-5 h-5 pointer-events-none"></i></button>
+                                                            <button onClick={() => setDocToDelete(doc)} className="text-red-500 hover:text-red-700 p-1 transition-transform transform hover:scale-125" title="Excluir"><i data-lucide="trash-2" className="w-5 h-5 pointer-events-none"></i></button>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                        <footer className="mt-4 pt-4 border-t dark:border-gray-700">
+                                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                                            <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"><i data-lucide="upload" className="w-5 h-5 mr-2"></i> Adicionar Documento</button>
+                                        </footer>
+                                    </div>
+                                )}
+                                {activeTab === 'attendances' && (
+                                    <div>
+                                        <div className="mb-4"><textarea value={newAttendanceNote} onChange={(e) => setNewAttendanceNote(e.target.value)} rows={3} placeholder="Descreva o atendimento ou ocorrência..." className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 transition"></textarea><button onClick={handleAddAttendance} disabled={!newAttendanceNote.trim()} className="mt-2 flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 shadow-md transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"><i data-lucide="plus" className="w-5 h-5 mr-2"></i> Adicionar Registro</button></div>
+                                        {attendances.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400"><i data-lucide="message-square-off" className="w-12 h-12 mx-auto mb-2"></i><p>Nenhum atendimento registrado.</p></div>
+                                        ) : (
+                                            <ul className="space-y-3">
+                                                {attendances.map(att => (<li key={att.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"><p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{att.notes}</p><p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Registrado por <strong>{att.createdBy}</strong> em {new Date(att.createdAt).toLocaleString('pt-BR')}</p></li>))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>,
+            {previewingDoc && <DocumentPreviewModal doc={previewingDoc} onClose={() => setPreviewingDoc(null)} />}
+            <ConfirmationModal show={!!docToDelete} title="Confirmar Exclusão de Documento" message={<p>Tem certeza que deseja excluir o documento <strong>{docToDelete?.name}</strong>? Esta ação não pode ser desfeita.</p>} onConfirm={handleConfirmDeleteDoc} onCancel={() => setDocToDelete(null)} confirmText="Sim, Excluir"/>
+        </>,
         modalRoot
     );
 };
 
 const StatusBadge: React.FC<{ status: Client['status'] }> = ({ status }) => {
     const colors = {
-        Ativo: 'bg-green-100 text-green-800',
-        Inativo: 'bg-yellow-100 text-yellow-800',
-        Suspenso: 'bg-red-100 text-red-800',
+        Ativo: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+        Inativo: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300',
+        Suspenso: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
     };
     return <span className={`px-2 py-1 text-xs font-medium rounded-full ${colors[status]} shadow-sm`}>{status}</span>;
 };
 
 
-const Clients: React.FC = () => {
+const Clients: React.FC<{ username: string }> = ({ username }) => {
     const [showModal, setShowModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | undefined>(undefined);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showDocModal, setShowDocModal] = useState<Client | null>(null);
-    const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState<Client | null>(null);
+    const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
     const modalRoot = document.getElementById('modal-root');
+    const [allClients, setAllClients] = useState<Client[]>([]);
+    const [overdueClientIds, setOverdueClientIds] = useState<Set<number>>(new Set());
+
+    const fetchClients = useCallback(async () => {
+        const clients = await sqliteService.getAll<Client>('clients');
+        const payments = await sqliteService.getAll<Payment>('payments');
+        setAllClients(clients);
+
+        const today = new Date();
+        // Use UTC dates to avoid timezone issues when comparing just dates.
+        const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+
+        // The reference month for which payment is required is the previous month.
+        const lastMonth = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), 0));
+        const lastMonthRef = `${lastMonth.getUTCFullYear()}-${String(lastMonth.getUTCMonth() + 1).padStart(2, '0')}`;
     
-    const allClients = useLiveQuery(() => db.clients.toArray(), []);
+        // Get the first day of the current month to check against affiliation date.
+        const firstDayOfThisMonth = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), 1));
+
+        const paidLastMonthIds = new Set(
+            payments.filter(p => p.referencia === lastMonthRef).map(p => p.clientId)
+        );
+
+        const newOverdueIds = new Set<number>();
+        clients.forEach(client => {
+            if (client.status !== 'Ativo' || !client.id) {
+                return; // Skip inactive or invalid clients
+            }
+
+            // Parse affiliation date as UTC to match other dates
+            const filiacaoDateParts = client.dataFiliacao.split('-').map(Number);
+            const filiacaoDate = new Date(Date.UTC(filiacaoDateParts[0], filiacaoDateParts[1] - 1, filiacaoDateParts[2]));
+            
+            // A client is only considered for an overdue check if they were a member *before* the start of the current month.
+            // If they joined this month, they are not considered overdue for last month's payment.
+            if (filiacaoDate >= firstDayOfThisMonth) {
+                return; // Skip new members from this month
+            }
+
+            if (!paidLastMonthIds.has(client.id)) {
+                newOverdueIds.add(client.id);
+            }
+        });
+        setOverdueClientIds(newOverdueIds);
+    }, []);
+
+    useEffect(() => {
+        fetchClients();
+    }, [fetchClients]);
 
     const filteredClients = useMemo(() => {
         if (!allClients) return [];
@@ -343,7 +501,7 @@ const Clients: React.FC = () => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, [filteredClients, showModal, showDocModal, previewingDoc]);
+    }, [filteredClients, showModal, showDetailsModal, clientToDelete]);
 
     const handleAdd = () => {
         setEditingClient(undefined);
@@ -355,33 +513,31 @@ const Clients: React.FC = () => {
         setShowModal(true);
     };
 
-    const handleDelete = async (clientId: number) => {
-        if (window.confirm('Tem certeza que deseja excluir este associado? Todos os pagamentos, declarações e documentos relacionados também serão excluídos.')) {
-            try {
-                // FIX: Cast `db` to `Dexie` to access the `transaction` method.
-                await (db as Dexie).transaction('rw', db.clients, db.payments, db.declarations, db.documents, async () => {
-                    await db.payments.where({ clientId }).delete();
-                    await db.declarations.where({ clientId }).delete();
-                    await db.documents.where({ clientId }).delete();
-                    await db.clients.delete(clientId);
-                });
-                alert('Associado excluído com sucesso!');
-            } catch (error) {
-                console.error("Failed to delete client:", error);
-                alert("Ocorreu um erro ao excluir o associado.");
-            }
+    const handleConfirmDelete = async () => {
+        if (!clientToDelete) return;
+
+        try {
+            await sqliteService.deleteClientAndRelations(clientToDelete.id!);
+            toastService.show('success', 'Sucesso!', 'Associado e todos os seus dados foram excluídos.');
+            fetchClients(); // Refresh list
+        } catch (error) {
+            console.error("Falha ao excluir associado:", error);
+            toastService.show('error', 'Erro!', 'Ocorreu um erro ao excluir o associado.');
+        } finally {
+            setClientToDelete(null);
         }
     };
 
     const handleSave = () => {
         setShowModal(false);
         setEditingClient(undefined);
+        fetchClients(); // Refresh list
     };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Associados</h1>
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Associados</h1>
                 <button onClick={handleAdd} className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg shadow-md hover:bg-emerald-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
                     <i data-lucide="plus" className="w-5 h-5 mr-2 pointer-events-none"></i> Novo Associado
                 </button>
@@ -391,38 +547,43 @@ const Clients: React.FC = () => {
                 <input
                     type="text"
                     placeholder="Buscar por nome ou CPF..."
-                    className="p-2 border rounded w-full max-w-sm shadow-sm focus:ring-2 focus:ring-emerald-500 transition-shadow"
+                    className="p-2 border rounded w-full max-w-sm shadow-sm focus:ring-2 focus:ring-emerald-500 transition-shadow bg-transparent dark:border-gray-600"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th className="p-3 text-left text-sm font-semibold text-gray-600">Nome</th>
-                                <th className="p-3 text-left text-sm font-semibold text-gray-600">CPF</th>
-                                <th className="p-3 text-left text-sm font-semibold text-gray-600">Telefone</th>
-                                <th className="p-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                                <th className="p-3 text-left text-sm font-semibold text-gray-600">Ações</th>
+                                <th className="p-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Nome</th>
+                                <th className="p-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">CPF</th>
+                                <th className="p-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Telefone</th>
+                                <th className="p-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                                <th className="p-3 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Ações</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {filteredClients?.map(client => (
-                                <tr key={client.id} className="hover:bg-gray-50 transition-colors duration-200">
+                                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200">
                                     <td className="p-3 flex items-center">
                                         <img src={client.foto || genericAvatar} alt="Foto" className="w-10 h-10 rounded-full mr-3 object-cover bg-gray-200 shadow-sm"/>
-                                        {client.nomeCompleto}
+                                        <div className="flex items-center">
+                                          {client.nomeCompleto}
+                                          {overdueClientIds.has(client.id!) && (
+                                              <span title="Pagamento do último mês em aberto" className="ml-2 w-3 h-3 bg-red-500 rounded-full shadow-md animate-pulse"></span>
+                                          )}
+                                        </div>
                                     </td>
                                     <td className="p-3">{client.cpf}</td>
                                     <td className="p-3">{maskPhone(client.telefone)}</td>
                                     <td className="p-3"><StatusBadge status={client.status} /></td>
                                     <td className="p-3 space-x-1">
-                                        <button onClick={() => setShowDocModal(client)} className="text-gray-500 hover:text-gray-700 p-1 transition-transform transform hover:scale-125" title="Documentos"><i data-lucide="folder" className="w-4 h-4 pointer-events-none"></i></button>
+                                        <button onClick={() => setShowDetailsModal(client)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 p-1 transition-transform transform hover:scale-125" title="Detalhes"><i data-lucide="folder" className="w-4 h-4 pointer-events-none"></i></button>
                                         <button onClick={() => handleEdit(client)} className="text-blue-500 hover:text-blue-700 p-1 transition-transform transform hover:scale-125" title="Editar"><i data-lucide="edit" className="w-4 h-4 pointer-events-none"></i></button>
-                                        <button onClick={() => handleDelete(client.id!)} className="text-red-500 hover:text-red-700 p-1 transition-transform transform hover:scale-125" title="Excluir"><i data-lucide="trash-2" className="w-4 h-4 pointer-events-none"></i></button>
+                                        <button onClick={() => setClientToDelete(client)} className="text-red-500 hover:text-red-700 p-1 transition-transform transform hover:scale-125" title="Excluir"><i data-lucide="trash-2" className="w-4 h-4 pointer-events-none"></i></button>
                                     </td>
                                 </tr>
                             ))}
@@ -437,25 +598,39 @@ const Clients: React.FC = () => {
                     onClick={() => setShowModal(false)}
                 >
                     <div 
-                        className="relative bg-white p-8 rounded-lg shadow-2xl scale-in w-full max-w-4xl"
+                        className="relative bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl scale-in w-full max-w-4xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                          <button 
                             onClick={() => setShowModal(false)} 
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
                             aria-label="Fechar"
                         >
                             <i data-lucide="x" className="w-6 h-6 pointer-events-none"></i>
                         </button>
 
-                        <h2 className="text-2xl font-bold mb-6 text-gray-800">{editingClient ? 'Editar' : 'Novo'} Associado</h2>
+                        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">{editingClient ? 'Editar' : 'Novo'} Associado</h2>
                         <ClientForm client={editingClient} onSave={handleSave} onCancel={() => setShowModal(false)} />
                     </div>
                 </div>,
                 modalRoot
             )}
-            {showDocModal && <DocumentModal client={showDocModal} onClose={() => setShowDocModal(null)} onPreview={setPreviewingDoc} />}
-            {previewingDoc && <DocumentPreviewModal doc={previewingDoc} onClose={() => setPreviewingDoc(null)} />}
+            {showDetailsModal && <ClientDetailsModal client={showDetailsModal} onClose={() => setShowDetailsModal(null)} username={username} />}
+            <ConfirmationModal
+                show={!!clientToDelete}
+                title="Confirmar Exclusão de Associado"
+                message={
+                    <>
+                        <p>Você está prestes a excluir permanentemente o associado:</p>
+                        <p className="font-semibold my-2 bg-gray-100 dark:bg-gray-700 p-2 rounded">{clientToDelete?.nomeCompleto}</p>
+                        <p className="text-red-700 font-bold">Todos os pagamentos, declarações e documentos relacionados também serão apagados. Esta ação não pode ser desfeita.</p>
+                        <p className="mt-2">Deseja continuar?</p>
+                    </>
+                }
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setClientToDelete(null)}
+                confirmText="Sim, Excluir Permanentemente"
+            />
         </div>
     );
 };

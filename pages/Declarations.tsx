@@ -1,20 +1,31 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
-import type { Client, DeclarationLog } from '../types';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { sqliteService } from '../services/sqliteService';
+import { toastService } from '../services/toastService';
+import type { Client, DeclarationLog, Payment } from '../types';
 import { generateDeclarationPDF, generatePaymentStatusDeclarationPDF } from '../services/pdfService';
 
 const Declarations: React.FC = () => {
     const [selectedClientId, setSelectedClientId] = useState<number | string>('');
     const [declarationType, setDeclarationType] = useState<'association' | 'paymentStatus'>('association');
-    const clients = useLiveQuery(() => db.clients.toArray(), []);
-    const declarations = useLiveQuery(() => db.declarations.orderBy('createdAt').reverse().toArray(), []);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [declarations, setDeclarations] = useState<DeclarationLog[]>([]);
     
+    const fetchData = useCallback(async () => {
+        const clientData = await sqliteService.getAll<Client>('clients');
+        const declarationData = await sqliteService.getAll<DeclarationLog>('declarations');
+        setClients(clientData);
+        setDeclarations(declarationData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
     useEffect(() => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
-    }, []);
+    }, [declarations]);
 
     const clientMap = useMemo(() => {
         if (!clients) return new Map();
@@ -23,7 +34,7 @@ const Declarations: React.FC = () => {
 
     const handleGenerate = async () => {
         if (!selectedClientId) {
-            alert('Por favor, selecione um associado.');
+            toastService.show('info', 'Atenção', 'Por favor, selecione um associado.');
             return;
         }
         
@@ -34,29 +45,31 @@ const Declarations: React.FC = () => {
             if (declarationType === 'association') {
                 await generateDeclarationPDF(client);
             } else if (declarationType === 'paymentStatus') {
-                const lastPaymentArray = await db.payments
-                    .where({ clientId: client.id! })
-                    .reverse()
-                    .sortBy('referencia');
+                const clientPayments = await sqliteService.getPaymentsByClientId(client.id!);
                 
-                if (lastPaymentArray.length === 0) {
-                    alert('Este associado não possui pagamentos registrados para gerar a declaração de pagamento.');
+                if (clientPayments.length === 0) {
+                    toastService.show('info', 'Atenção', 'Este associado não possui pagamentos para gerar esta declaração.');
                     return;
                 }
+                const lastPayment = clientPayments.sort((a,b) => b.referencia.localeCompare(a.referencia))[0];
     
-                await generatePaymentStatusDeclarationPDF(client, lastPaymentArray[0]);
+                await generatePaymentStatusDeclarationPDF(client, lastPayment);
             }
 
             // Log the declaration
-            await db.declarations.add({
+            await sqliteService.insert('declarations', {
                 clientId: client.id!,
                 dataEmissao: new Date().toISOString().split('T')[0],
-                createdAt: new Date()
+                createdAt: new Date().toISOString()
             });
+            
+            toastService.show('success', 'Sucesso!', 'Declaração gerada e registrada no histórico.');
+            // Refresh declarations log
+            fetchData();
             
         } catch (error) {
             console.error("Failed to generate declaration:", error);
-            alert("Ocorreu um erro ao gerar a declaração.");
+            toastService.show('error', 'Erro!', 'Ocorreu um erro ao gerar a declaração.');
         }
     };
 

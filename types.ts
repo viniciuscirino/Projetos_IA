@@ -44,7 +44,7 @@ export interface Document {
     clientId: number;
     name: string;
     type: string;
-    content: Blob;
+    content: Uint8Array;
     createdAt: Date;
 }
 
@@ -61,5 +61,13 @@ export interface User {
     createdAt: Date;
 }
 
+export interface Attendance {
+    id?: number;
+    clientId: number;
+    notes: string;
+    createdAt: string;
+    createdBy: string;
+}
 
-export type Page = 'dashboard' | 'clients' | 'payments' | 'declarations' | 'reports' | 'expenses' | 'admin';
+
+export type Page = 'dashboard' | 'clients' | 'payments' | 'declarations' | 'reports' | 'expenses' | 'admin' | 'caixa' | 'mailing';

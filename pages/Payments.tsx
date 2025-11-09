@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../services/db';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { sqliteService } from '../services/sqliteService';
+import { toastService } from '../services/toastService';
 import type { Client, Payment } from '../types';
 import { generatePaymentReceipt } from '../services/pdfService';
 
@@ -17,14 +17,15 @@ const PaymentForm: React.FC<{ onSave: () => void, clients: Client[], username: s
         
         const today = new Date();
         try {
-            await db.payments.add({
+            await sqliteService.insert('payments', {
                 clientId: Number(clientId),
                 referencia,
                 dataPagamento: today.toISOString().split('T')[0],
                 valor: Number(valor),
-                createdAt: new Date(),
+                createdAt: today.toISOString(),
                 registeredBy: username,
             });
+            toastService.show('success', 'Sucesso!', 'Pagamento registrado com sucesso.');
             // Reset form on successful submission
             setClientId('');
             setValor('');
@@ -32,7 +33,7 @@ const PaymentForm: React.FC<{ onSave: () => void, clients: Client[], username: s
             onSave();
         } catch(error) {
             console.error("Failed to save payment:", error);
-            alert("Erro ao salvar pagamento. Este associado já possui um pagamento para este mês de referência.");
+            toastService.show('error', 'Erro de Duplicidade', 'Este associado já possui um pagamento para este mês de referência.');
         }
     };
     
@@ -67,8 +68,21 @@ interface PaymentsProps {
 
 const Payments: React.FC<PaymentsProps> = ({ username }) => {
     const [filter, setFilter] = useState('');
-    const clients = useLiveQuery(() => db.clients.toArray(), []);
-    const payments = useLiveQuery(() => db.payments.orderBy('dataPagamento').reverse().toArray(), []);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [payments, setPayments] = useState<Payment[]>([]);
+
+    const fetchData = useCallback(async () => {
+        const clientData = await sqliteService.getAll<Client>('clients');
+        const paymentData = await sqliteService.getAll<Payment>('payments');
+        setClients(clientData);
+        // Sort payments by date descending
+        const sortedPayments = paymentData.sort((a, b) => new Date(b.dataPagamento).getTime() - new Date(a.dataPagamento).getTime());
+        setPayments(sortedPayments);
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const clientMap = useMemo(() => {
         if (!clients) return new Map();
@@ -98,7 +112,7 @@ const Payments: React.FC<PaymentsProps> = ({ username }) => {
         <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Pagamentos</h1>
             
-            <PaymentForm onSave={() => {}} clients={clients || []} username={username} />
+            <PaymentForm onSave={fetchData} clients={clients || []} username={username} />
 
             <div className="mt-8 bg-white rounded-lg shadow-lg">
                  <div className="p-4">

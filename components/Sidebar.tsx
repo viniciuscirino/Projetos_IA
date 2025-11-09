@@ -5,7 +5,10 @@ interface SidebarProps {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
   onLogout: () => void;
+  onSave: () => void;
   userRole: string;
+  toggleTheme: () => void;
+  theme: string;
 }
 
 const NavItem: React.FC<{
@@ -19,7 +22,7 @@ const NavItem: React.FC<{
     className={`flex items-center p-3 my-1 rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:translate-x-1 ${
       currentPage === page
         ? 'bg-emerald-600 text-white shadow-lg'
-        : 'text-gray-600 hover:bg-emerald-100 hover:text-emerald-800'
+        : 'text-gray-600 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-gray-700 hover:text-emerald-800 dark:hover:text-emerald-300'
     }`}
     onClick={() => setCurrentPage(page)}
   >
@@ -28,20 +31,20 @@ const NavItem: React.FC<{
   </li>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout, userRole }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout, onSave, userRole, toggleTheme, theme }) => {
   useEffect(() => {
     if (window.lucide) {
       window.lucide.createIcons();
     }
-  }, [currentPage]);
+  }, [currentPage, theme]);
 
   return (
-    <div className="flex flex-col w-64 bg-white shadow-xl h-full p-4">
+    <div className="flex flex-col w-64 bg-white dark:bg-gray-800 shadow-xl h-full p-4 transition-colors duration-300">
       <div className="flex items-center mb-8">
         <div className="bg-emerald-500 p-2 rounded-lg mr-3 shadow-md">
           <i data-lucide="leaf" className="w-8 h-8 text-white pointer-events-none"></i>
         </div>
-        <h1 className="text-xl font-bold text-gray-800">Sindicato Rural</h1>
+        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">Sindicato Rural</h1>
       </div>
       <nav className="flex-1">
         <ul>
@@ -49,7 +52,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
           <NavItem page="clients" icon="users" label="Associados" currentPage={currentPage} setCurrentPage={setCurrentPage} />
           <NavItem page="payments" icon="dollar-sign" label="Pagamentos" currentPage={currentPage} setCurrentPage={setCurrentPage} />
           <NavItem page="expenses" icon="trending-down" label="Despesas" currentPage={currentPage} setCurrentPage={setCurrentPage} />
+          <NavItem page="caixa" icon="scale" label="Fluxo de Caixa" currentPage={currentPage} setCurrentPage={setCurrentPage} />
           <NavItem page="declarations" icon="file-text" label="Declarações" currentPage={currentPage} setCurrentPage={setCurrentPage} />
+          <NavItem page="mailing" icon="mail" label="Mala Direta" currentPage={currentPage} setCurrentPage={setCurrentPage} />
           <NavItem page="reports" icon="bar-chart-3" label="Relatórios" currentPage={currentPage} setCurrentPage={setCurrentPage} />
           {userRole === 'admin' && (
             <NavItem page="admin" icon="shield" label="Administração" currentPage={currentPage} setCurrentPage={setCurrentPage} />
@@ -58,8 +63,24 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
       </nav>
       <div className="space-y-2">
         <button
+          onClick={onSave}
+          className="flex items-center w-full p-3 my-1 rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:translate-x-1 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-700 hover:text-blue-800 dark:hover:text-blue-300"
+        >
+          <i data-lucide="database-backup" className="w-5 h-5 mr-3 pointer-events-none"></i>
+          <span className="font-medium pointer-events-none">Backup (Salvar Arquivo)</span>
+        </button>
+        <button
+          onClick={toggleTheme}
+          className="flex items-center w-full p-3 my-1 rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:translate-x-1 text-gray-600 dark:text-gray-300 hover:bg-yellow-100 dark:hover:bg-gray-700 hover:text-yellow-800 dark:hover:text-yellow-300"
+        >
+          <i data-lucide={theme === 'light' ? 'moon' : 'sun'} className="w-5 h-5 mr-3 pointer-events-none"></i>
+          <span className="font-medium pointer-events-none">
+            {theme === 'light' ? 'Modo Escuro' : 'Modo Claro'}
+          </span>
+        </button>
+        <button
           onClick={onLogout}
-          className="flex items-center w-full p-3 my-1 rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:translate-x-1 text-gray-600 hover:bg-red-100 hover:text-red-800"
+          className="flex items-center w-full p-3 my-1 rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:translate-x-1 text-gray-600 dark:text-gray-300 hover:bg-red-100 dark:hover:bg-gray-700 hover:text-red-800 dark:hover:text-red-300"
         >
           <i data-lucide="log-out" className="w-5 h-5 mr-3 pointer-events-none"></i>
           <span className="font-medium pointer-events-none">Sair</span>

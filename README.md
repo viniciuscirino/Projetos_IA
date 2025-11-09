@@ -1,14 +1,14 @@
 # Sistema de Gestão - Sindicato Rural de Indiaroba
 
-![Versão](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Versão](https://img.shields.io/badge/version-6.0.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-ativo-success.svg)
 ![Licença](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## 📄 Descrição
 
-O **Sistema de Gestão para o Sindicato Rural de Indiaroba** é uma aplicação web completa com uma arquitetura **100% offline-first**. Seu objetivo é modernizar e simplificar a administração das operações diárias do sindicato. A ferramenta armazena todos os dados diretamente no **banco de dados do navegador (IndexedDB)**, garantindo total privacidade e acesso contínuo às funcionalidades mesmo sem conexão à internet após o primeiro carregamento.
+O **Sistema de Gestão para o Sindicato Rural de Indiaroba** é uma aplicação web moderna, segura e que funciona 100% offline. Seu objetivo é simplificar a administração das operações diárias do sindicato, com uma arquitetura que armazena **todos os dados de forma automática e segura diretamente no navegador do usuário**.
 
-A aplicação foi construída com foco em usabilidade, permitindo o gerenciamento de associados, controle de pagamentos, geração de documentos oficiais e relatórios financeiros detalhados, sem a necessidade de gerenciar arquivos externos.
+Isso significa que você não precisa se preocupar em carregar ou salvar arquivos no dia a dia. O sistema simplesmente funciona. Para garantir a segurança e portabilidade dos seus dados, foram implementadas funcionalidades robustas de **Backup** e **Restauração**, que permitem exportar todo o banco de dados para um único arquivo `.sqlite` e importá-lo novamente quando necessário.
 
 ---
 
@@ -16,106 +16,89 @@ A aplicação foi construída com foco em usabilidade, permitindo o gerenciament
 
 O sistema é dividido em módulos intuitivos para cobrir todas as necessidades de gestão do sindicato:
 
+-   **💾 Gerenciamento de Dados e Backup:**
+    -   **Armazenamento Automático:** O sistema utiliza o banco de dados interno do navegador (IndexedDB) para salvar todas as informações. As alterações são persistidas automaticamente, sem a necessidade de clicar em "salvar".
+    -   **Funcionamento Offline:** Após o primeiro carregamento, a aplicação funciona completamente sem conexão com a internet.
+    -   **Backup em um Clique:** Gere um backup completo de todos os seus dados (associados, pagamentos, etc.) em um único arquivo `.sqlite` através do botão na barra lateral. Guarde este arquivo em um local seguro (pen drive, nuvem, etc.).
+    -   **Restauração Segura:** Restaure o sistema a um estado anterior utilizando um arquivo de backup. Esta funcionalidade está disponível no painel de Administração e substitui todos os dados atuais.
+
 -   **👤 Gestão de Associados:**
     -   Cadastro completo de associados com informações pessoais, de contato, data de filiação e foto.
     -   Edição, exclusão e busca rápida por nome ou CPF.
-    -   Controle de status do associado (Ativo, Inativo, Suspenso).
-    -   Armazenamento de documentos digitalizados por associado.
+    -   Controle de status do associado (Ativo, Inativo, Suspenso) e **indicador visual de inadimplência**.
+    -   Gerenciamento de documentos digitalizados por associado.
+    -   **Registro de Atendimentos:** Mantenha um histórico de todas as interações e ocorrências com cada associado.
 
--   **💵 Registro de Pagamentos:**
+-   **💵 Gestão Financeira:**
+    -   **Fluxo de Caixa:** Uma visão unificada de todas as receitas (pagamentos) e despesas, com filtros por período para um controle financeiro preciso.
     -   Lançamento de pagamentos mensais com seleção de mês/ano de referência.
     -   Geração de recibos de pagamento em PDF com um clique.
-    -   Histórico completo de pagamentos por associado.
-
--   **📉 Gestão de Despesas:**
     -   Cadastro de todas as despesas do sindicato, com descrição, categoria e valor.
-    -   Organização financeira e base para relatórios de balanço.
 
--   **📄 Geração de Declarações:**
-    -   Emissão de **Declaração de Vínculo Associativo** em PDF, com layout profissional e personalizável.
-    -   Emissão de **Declaração de Situação de Pagamento**, atestando que o associado está em dia com suas obrigações.
-    -   Histórico de todas as declarações emitidas.
+-   **📄 Comunicação e Documentos:**
+    -   **Mala Direta e Etiquetas:** Gere etiquetas de endereçamento prontas para impressão para se comunicar com os associados via correio.
+    -   **Integração com WhatsApp:** Envie mensagens rapidamente para os associados abrindo uma conversa no WhatsApp Web com um único clique.
+    -   Emissão de **Declaração de Vínculo Associativo** e **Declaração de Situação de Pagamento** em PDF, personalizáveis no painel de administração.
 
 -   **📊 Relatórios:**
-    -   **Relatórios Mensais:**
-        -   Listagem de associados pagantes no mês de referência.
-        -   Listagem de associados inadimplentes.
-    -   **Relatórios Anuais:**
-        -   Balanço financeiro completo, consolidando receitas (pagamentos) e despesas para análise do resultado líquido.
-    -   Todos os relatórios são gerados em uma nova aba, com layout otimizado para impressão.
+    -   Relatórios mensais de pagantes e inadimplentes.
+    -   Balanço financeiro anual consolidando receitas e despesas.
 
--   **🔐 Administração e Segurança:**
+-   **🔐 Administração e Experiência de Uso:**
+    -   **Modo Escuro:** Alterne entre temas claro e escuro para maior conforto visual.
     -   Sistema de autenticação com dois níveis de acesso: **Administrador** e **Usuário**.
-    -   **Backup e Restauração (via JSON):** Ferramenta crucial para exportar todos os dados do sistema para um único arquivo JSON e importá-los quando necessário. **Este é o único método para garantir a segurança e a portabilidade dos dados.**
-    -   Painel de configurações para personalizar informações do sindicato (nome, CNPJ, endereço) e o modelo da declaração.
-    -   Gerenciamento de usuários (apenas para administradores).
+    -   Painel de configurações para personalizar informações do sindicato (nome, CNPJ, etc.).
+    -   Gerenciamento de usuários e ferramentas de diagnóstico do sistema (apenas para administradores).
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-Este projeto foi construído com tecnologias modernas, focando em uma arquitetura que não exige um servidor de back-end nem um processo de build complexo.
-
--   **Frontend:**
-    -   [**React**](https://reactjs.org/) - Biblioteca para construção da interface de usuário.
-    -   [**TypeScript**](https://www.typescriptlang.org/) - Superset do JavaScript que adiciona tipagem estática.
-    -   [**Tailwind CSS**](https://tailwindcss.com/) - Framework CSS para estilização rápida e responsiva.
-
--   **Banco de Dados (Local):**
-    -   [**IndexedDB**](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) - API de banco de dados do navegador para armazenamento local.
-    -   [**Dexie.js**](https://dexie.org/) - Wrapper poderoso para IndexedDB, simplificando as operações de banco de dados.
-
--   **Geração de Documentos:**
-    -   [**jsPDF**](https://github.com/parallax/jsPDF) & [**jsPDF-AutoTable**](https://github.com/simonbengtsson/jsPDF-AutoTable) - Para a criação dinâmica de documentos PDF.
-
--   **Ícones:**
-    -   [**Lucide Icons**](https://lucide.dev/) - Biblioteca de ícones open-source, leve e personalizável.
+-   **Frontend:** React, TypeScript, Tailwind CSS.
+-   **Banco de Dados:**
+    -   **Dexie.js (IndexedDB):** Utilizado como o banco de dados principal no navegador para armazenamento rápido, automático e offline.
+    -   **SQLite (via sql.js):** Utilizado para as funcionalidades de importação/exportação (Backup e Restauração), permitindo a manipulação de arquivos `.sqlite` diretamente no navegador.
+-   **Geração de Documentos:** jsPDF & jsPDF-AutoTable.
+-   **Ícones:** Lucide Icons.
 
 ---
 
 ## 🚀 Como Executar o Projeto
 
-Este projeto foi desenvolvido para ser executado diretamente no navegador, sem a necessidade de um processo de build complexo ou instalação de dependências via `npm`.
+O sistema é projetado para ser executado em qualquer navegador moderno. Basta abrir o arquivo `index.html` ou, para melhores resultados e para garantir o funcionamento de todas as funcionalidades, servir os arquivos a partir de um servidor local.
 
-1.  **Clone o repositório:**
+1.  **Clone o repositório (se desejar executar localmente):**
     ```bash
     git clone https://github.com/seu-usuario/sindicato-gestao.git
+    cd sindicato-gestao
     ```
 
-2.  **Execute um servidor local:**
-    -   Para garantir o funcionamento correto e evitar problemas de segurança (CORS), é recomendado usar um servidor web local. Se você tem o Node.js instalado, o método mais simples é usar o pacote `serve`:
-        ```bash
-        # Navegue até a pasta do projeto
-        cd sindicato-gestao
+2.  **Use um servidor local simples:**
+    ```bash
+    # Se você tiver o Node.js instalado, pode usar o 'serve'
+    npx serve .
+    ```
+    -   Acesse o endereço fornecido (geralmente `http://localhost:3000`).
 
-        # Instale e execute o servidor
-        npx serve .
-        ```
-    -   Após executar o comando, acesse o endereço fornecido no terminal (geralmente `http://localhost:3000`). O sistema irá diretamente para a tela de login. O banco de dados será criado e populado automaticamente no primeiro acesso.
+### Fluxo de Uso Simplificado
 
-3.  **Alternativa (abrir arquivo diretamente):**
-    -   Você também pode abrir o arquivo `index.html` diretamente no seu navegador. No entanto, alguns navegadores podem restringir funcionalidades quando arquivos são abertos localmente (protocolo `file:///`). O uso de um servidor local é sempre recomendado.
-
-### Uso Offline
-
-A aplicação foi projetada com uma abordagem **offline-first**:
-
--   **Primeiro Acesso:** É necessário ter uma conexão com a internet no primeiro acesso para que o navegador possa baixar as dependências externas (React, Tailwind CSS, etc.) dos CDNs.
--   **Uso Subsequente:** Após o primeiro carregamento, o navegador armazena esses arquivos em cache. **Enquanto o cache do navegador não for limpo**, a aplicação poderá ser iniciada e utilizada completamente offline. Todos os dados de associados, pagamentos, etc., são sempre salvos localmente no seu navegador e não dependem de internet.
-
-### Login Padrão
-
-Para acessar o sistema pela primeira vez, utilize uma das credenciais padrão:
--   **Administrador:** `username: admin` | `password: admin`
--   **Usuário:** `username: vinicius` | `password: user`
+1.  **Primeiro Acesso:** Simplesmente abra a aplicação. O banco de dados será criado e configurado automaticamente no seu navegador. Não há necessidade de criar ou carregar arquivos.
+2.  **Login:** Após o carregamento inicial, a tela de login aparecerá. Use as credenciais padrão:
+    -   **Administrador:** `username: admin` | `password: admin`
+    -   **Usuário:** `username: vinicius` | `password: user`
+3.  **Uso Diário:** Utilize o sistema normalmente. Todas as suas alterações são salvas de forma automática e instantânea no navegador.
+4.  **Backup (Importante!):** Periodicamente, clique no botão **"Backup (Salvar Arquivo)"** na barra lateral. Um arquivo `.sqlite` com todos os seus dados será gerado para download. Salve-o em um local seguro.
+5.  **Restauração:** Para restaurar dados (por exemplo, ao trocar de computador), acesse a página **Administração**, vá para a **Zona de Perigo**, clique em **"Restaurar"** e selecione o seu arquivo de backup `.sqlite`. **Atenção:** Isso substituirá todos os dados existentes.
 
 ---
 
-## ⚠️ Importante: Backup dos Dados
+## ⚠️ Importante: Gerenciamento e Backup dos Dados
 
-Como todos os dados são armazenados no **IndexedDB** do navegador, eles estão **vinculados ao navegador e ao perfil de usuário específico** onde a aplicação é acessada. Os dados podem ser perdidos permanentemente caso o usuário limpe o cache do site, os dados de navegação ou formate o computador.
+A grande vantagem deste sistema é a combinação de facilidade de uso com controle total dos dados.
 
-É **extremamente recomendado** que o administrador realize **backups regulares** utilizando a funcionalidade de **Exportar Dados** no painel de **Administração**. O arquivo `.json` gerado é a única garantia de recuperação dos dados em caso de perda e o único meio de transferir os dados para outro computador.
+-   **Salvamento é Automático:** Você não precisa se preocupar em salvar. Tudo o que você faz é gravado imediatamente.
+-   **Backup é Essencial:** A responsabilidade de manter cópias de segurança é sua. **Faça backups regularmente!** Se os dados do seu navegador forem limpos, o backup será a única forma de recuperar suas informações.
+-   **Segurança do Backup:** Guarde suas cópias de segurança (`.sqlite`) em locais seguros e diferentes (ex: um pen drive e um serviço de nuvem como Google Drive ou Dropbox).
 
 ---
 
@@ -123,30 +106,16 @@ Como todos os dados são armazenados no **IndexedDB** do navegador, eles estão 
 
 ```
 /
-├── components/         # Componentes React reutilizáveis (ex: Sidebar)
-├── pages/              # Componentes de página (ex: Dashboard, Clients, Admin)
-├── services/           # Módulos de serviço (db.ts, pdfService.ts, reportService.ts)
+├── components/         # Componentes React reutilizáveis
+├── pages/              # Componentes de página (Dashboard, Clients, Admin)
+├── services/           # Módulos de serviço (sqliteService.ts, db.ts, pdfService.ts)
 ├── types.ts            # Definições de tipos TypeScript
-├── App.tsx             # Componente principal que gerencia o estado da aplicação
+├── App.tsx             # Componente principal que gerencia o estado e o fluxo da aplicação
 ├── index.html          # Ponto de entrada da aplicação
 ├── index.tsx           # Ponto de montagem do React
 └── README.md           # Este arquivo
 ```
-
 ---
-
-## 🤝 Contribuições
-
-Contribuições são bem-vindas! Se você deseja melhorar o sistema, siga os passos abaixo:
-
-1.  Faça um **fork** deste repositório.
-2.  Crie uma nova **branch** para sua feature (`git checkout -b minha-feature`).
-3.  Faça **commit** de suas alterações (`git commit -m 'Adiciona nova feature'`).
-4.  Faça **push** para a sua branch (`git push origin minha-feature`).
-5.  Abra um **Pull Request**.
-
----
-
 ## 📜 Licença
 
 Este projeto está licenciado sob a **Licença MIT**.
