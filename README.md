@@ -14,13 +14,23 @@ Construído com **Electron, React e TypeScript**, o sistema agora armazena todos
 
 ---
 
-## 🏛️ Arquitetura: Por que Mudar?
+## 🚀 Como Baixar e Instalar (Para Usuários Finais)
 
-A transição de uma aplicação web para uma de desktop foi uma decisão estratégica para garantir a longevidade e a robustez do sistema. A nova arquitetura oferece vantagens cruciais:
+Siga estes passos simples para ter o sistema funcionando em seu computador:
 
--   **Processo Principal (Node.js):** Um "motor" invisível que roda em segundo plano, gerenciando o banco de dados SQLite e tendo acesso seguro ao sistema de arquivos. Isso torna as operações de dados mais rápidas e seguras.
--   **Processo de Renderização (React):** A interface gráfica que você vê e interage, agora livre de responsabilidades de gerenciamento de dados, focando apenas em oferecer a melhor experiência de uso.
--   **Dados Desacoplados do Navegador:** O maior benefício. Seu banco de dados (`sindicato.sqlite`) é um arquivo real no seu computador. Ele não pode ser apagado acidentalmente ao limpar o cache do navegador e é facilmente transferível.
+1.  **➡️ Acesse a Página de Downloads:**
+    Clique no link abaixo para ir para a nossa página de releases (versões), onde você encontrará os instaladores mais recentes.
+    -   **[Clique Aqui para Baixar a Última Versão](https://github.com/SEU_USUARIO/SEU_REPOSITORIO/releases/latest)**
+    *(Nota: Este é um link de exemplo. O administrador do projeto deve substituí-lo pelo link real do repositório no GitHub.)*
+
+2.  **💻 Baixe o Instalador Correto:**
+    Na página de releases, procure pela seção "Assets" e baixe o arquivo compatível com o seu sistema operacional:
+    -   **Para Windows:** Baixe o arquivo que termina em `.exe` (ex: `SindicatoGestao-Setup-8.0.0.exe`).
+    -   **Para macOS:** Baixe o arquivo que termina em `.dmg`.
+    -   **Para Linux:** Baixe o arquivo que termina em `.deb` ou `.rpm`.
+
+3.  **✅ Instale o Aplicativo:**
+    -   Execute o arquivo que você baixou e siga as instruções na tela. O programa será instalado e um atalho será criado em sua área de trabalho ou menu de aplicativos.
 
 ---
 
@@ -55,14 +65,14 @@ Todas as funcionalidades que você já conhece foram aprimoradas pela nova plata
 
 ---
 
-## 🚀 Como Instalar e Usar
+## ▶️ Primeiro Uso
 
-1.  **Baixar o Instalador:** Faça o download do instalador compatível com seu sistema operacional (ex: `SindicatoGestao-Setup-8.0.0.exe` para Windows).
-2.  **Instalar:** Execute o arquivo baixado e siga as instruções. O programa será instalado e um atalho será criado na sua área de trabalho.
-3.  **Abrir o Aplicativo:** Clique no ícone do programa para iniciar.
-4.  **Login:** Na primeira vez, use as credenciais padrão:
+Após a instalação, siga estes passos:
+
+1.  **Abrir o Aplicativo:** Clique no ícone do programa para iniciar.
+2.  **Login:** Na primeira vez, use as credenciais padrão:
     -   **Administrador:** `username: admin` | `password: admin`
-5.  **Comece a Usar:** O sistema está pronto. Todos os dados serão salvos automaticamente no seu computador.
+3.  **Comece a Usar:** O sistema está pronto. Todos os dados serão salvos automaticamente no seu computador.
 
 ---
 
@@ -124,6 +134,7 @@ npm start
 # 4. Para criar os instaladores (Windows, macOS, Linux)
 npm run make
 ```
+O comando `npm run make` irá gerar os instaladores na pasta `/out`. Você pode então fazer o upload desses arquivos para a seção "Releases" do seu repositório GitHub.
 
 ---
 
