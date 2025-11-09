@@ -75,7 +75,6 @@ O sistema foi projetado para ser extremamente fácil de usar. Siga estes passos:
 1.  **Primeiro Acesso:** Siga os passos do "Método 1" acima. O banco de dados será criado e configurado automaticamente no seu navegador.
 2.  **Login:** Após o carregamento inicial, a tela de login aparecerá. Use as credenciais padrão:
     -   **Administrador:** `username: admin` | `password: admin`
-    -   **Usuário:** `username: vinicius` | `password: user`
 3.  **Uso Diário:** Utilize o sistema normalmente. Todas as suas alterações são salvas de forma automática e instantânea.
 4.  **Backup (Importante!):** Periodicamente, clique no botão **"Backup (Salvar Arquivo)"** na barra lateral. Um arquivo `.sqlite` com todos os seus dados será gerado para download. **Salve-o em um local seguro** (pen drive, Google Drive, etc.).
 5.  **Restauração:** Para restaurar dados (por exemplo, ao trocar de computador), acesse a página **Administração**, vá para a **Zona de Perigo**, clique em **"Restaurar"** e selecione o seu arquivo de backup `.sqlite`. **Atenção:** Isso substituirá todos os dados existentes.
